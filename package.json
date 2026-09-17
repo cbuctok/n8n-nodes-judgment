@@ -1,19 +1,24 @@
 {
-	"name": "n8n-nodes-<...>",
+	"name": "n8n-nodes-typesafe",
 	"version": "0.1.0",
-	"description": "",
+	"description": "n8n node for TypeSafe System One models: ask typed Choice, Score, and Noul questions about text or application state and get answers your workflow can branch on.",
 	"license": "MIT",
-	"homepage": "",
+	"homepage": "https://github.com/cbuctok/n8n-nodes-typesafe",
 	"keywords": [
-		"n8n-community-node-package"
+		"n8n-community-node-package",
+		"typesafe",
+		"ai",
+		"classification",
+		"judgement",
+		"routing"
 	],
 	"author": {
-		"name": "",
-		"email": ""
+		"name": "cbuctok",
+		"email": "cbuctok@users.noreply.github.com"
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/<...>/n8n-nodes-<...>.git"
+		"url": "git+https://github.com/cbuctok/n8n-nodes-typesafe.git"
 	},
 	"scripts": {
 		"build": "n8n-node build",
@@ -21,6 +26,13 @@
 		"dev": "n8n-node dev",
 		"lint": "n8n-node lint",
 		"lint:fix": "n8n-node lint --fix",
+		"check:fields": "node scripts/check-node-fields.mjs",
+		"smoke": "node scripts/smoke.mjs",
+		"e2e": "node scripts/e2e-n8n.mjs",
+		"n8n:up": "docker compose up -d --wait",
+		"n8n:logs": "docker compose logs -f n8n",
+		"n8n:down": "docker compose down",
+		"n8n:reset": "docker compose down -v && docker compose up -d --wait",
 		"release": "n8n-node release",
 		"prepublishOnly": "n8n-node prerelease"
 	},
@@ -31,19 +43,18 @@
 		"n8nNodesApiVersion": 1,
 		"strict": true,
 		"credentials": [
-			"dist/credentials/GithubIssuesApi.credentials.js",
-			"dist/credentials/GithubIssuesOAuth2Api.credentials.js"
+			"dist/credentials/TypeSafeApi.credentials.js"
 		],
 		"nodes": [
-			"dist/nodes/GithubIssues/GithubIssues.node.js",
-			"dist/nodes/Example/Example.node.js"
+			"dist/nodes/TypeSafe/TypeSafe.node.js"
 		]
 	},
 	"devDependencies": {
-		"@n8n/node-cli": "*",
+		"@n8n/node-cli": "^0.48.4",
+		"@typesafe-ai/sdk": "^0.6.0",
 		"eslint": "9.39.4",
-		"prettier": "3.8.3",
-		"release-it": "20.2.0",
+		"prettier": "^3.9.7",
+		"release-it": "^21.0.3",
 		"typescript": "5.9.3"
 	},
 	"peerDependencies": {

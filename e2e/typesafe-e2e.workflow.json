@@ -1,0 +1,773 @@
+{
+  "name": "TypeSafe — End to End",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "ts-01-trigger",
+      "name": "Start Here",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1060,
+        -260
+      ],
+      "notes": "Run this workflow to exercise every branch."
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": true,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "message",
+              "value": "Hi, I've been trying to connect my Stripe account for 3 days and it keeps failing. I'm losing sales. Please help ASAP.",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "account",
+              "value": "acme-labs",
+              "type": "string"
+            },
+            {
+              "id": "a3",
+              "name": "plan",
+              "value": "growth",
+              "type": "string"
+            },
+            {
+              "id": "a4",
+              "name": "policy",
+              "value": "Integration failures on paid plans are handled by the technical team within one business day.",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "ts-02-ticket",
+      "name": "Sample Ticket",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -840,
+        -480
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "evaluation",
+        "operation": "evaluate",
+        "state": "fields",
+        "stateFields": {
+          "field": [
+            {
+              "fieldName": "message",
+              "fieldValue": "={{ $json.message }}"
+            },
+            {
+              "fieldName": "account",
+              "fieldValue": "={{ $json.account }}"
+            },
+            {
+              "fieldName": "policy",
+              "fieldValue": "={{ $json.policy }}"
+            }
+          ]
+        },
+        "questions": {
+          "question": [
+            {
+              "id": "urgency",
+              "questionType": "noul",
+              "trueDescription": "Explicitly time-sensitive",
+              "falseDescription": "No urgency expressed",
+              "questionInstructions": "Does `message` convey urgency or time-sensitivity?"
+            },
+            {
+              "id": "department",
+              "questionType": "choice",
+              "choiceOptions": {
+                "entry": [
+                  {
+                    "option": "billing",
+                    "description": "Payments, invoicing, refunds"
+                  },
+                  {
+                    "option": "technical",
+                    "description": "Bugs, outages, integrations"
+                  },
+                  {
+                    "option": "sales",
+                    "description": "Pricing, upgrades, new accounts"
+                  }
+                ]
+              },
+              "questionInstructions": "Which team should handle `message`?"
+            },
+            {
+              "id": "frustration",
+              "questionType": "score",
+              "levels": {
+                "level": [
+                  {
+                    "description": "Calm, stating facts"
+                  },
+                  {
+                    "description": "Frustrated but civil"
+                  },
+                  {
+                    "description": "Very angry, strong language"
+                  }
+                ]
+              },
+              "questionInstructions": "How frustrated is the person writing `message`?"
+            },
+            {
+              "id": "policy_supports",
+              "questionType": "noul",
+              "trueDescription": "",
+              "falseDescription": "",
+              "questionInstructions": "Does `policy` support handling `message` within a business day?"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ts-03-evaluate",
+      "name": "1. Evaluate — mixed questions",
+      "type": "CUSTOM.typeSafe",
+      "typeVersion": 1,
+      "position": [
+        -620,
+        -480
+      ],
+      "credentials": {
+        "typeSafeApi": {
+          "id": "",
+          "name": "TypeSafe account"
+        }
+      },
+      "notes": "Expect 4 items: urgency + policy_supports as probabilities, department as a choice with confidence, frustration as a score with a legend."
+    },
+    {
+      "parameters": {
+        "resource": "noul",
+        "state": "text",
+        "stateText": "={{ $json.message }}",
+        "options": {
+          "threshold": 0.7
+        },
+        "noulQuestions": {
+          "noulQuestion": [
+            {
+              "noulName": "mentions_integration",
+              "noulInstructions": "Does the message mention an integration?",
+              "noulTrueDescription": "",
+              "noulFalseDescription": ""
+            },
+            {
+              "noulName": "mentions_revenue_loss",
+              "noulInstructions": "Does the message mention losing sales or revenue?",
+              "noulTrueDescription": "",
+              "noulFalseDescription": ""
+            }
+          ]
+        }
+      },
+      "id": "ts-04-noul",
+      "name": "2. Noul — threshold",
+      "type": "CUSTOM.typeSafe",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        -480
+      ],
+      "credentials": {
+        "typeSafeApi": {
+          "id": "",
+          "name": "TypeSafe account"
+        }
+      },
+      "notes": "Expect two items, each with probability and a boolean derived from the 0.7 threshold."
+    },
+    {
+      "parameters": {
+        "resource": "choice",
+        "operation": "decide",
+        "state": "json",
+        "stateJson": "={{ { \"message\": $json.message, \"plan\": $json.plan } }}",
+        "instructions": "Which team should handle this request given the plan in `plan`?",
+        "decisionOptions": {
+          "entry": [
+            {
+              "option": "billing",
+              "optionDescription": "Payment or subscription issues"
+            },
+            {
+              "option": "technical",
+              "optionDescription": "Bugs or integration problems"
+            },
+            {
+              "option": "sales",
+              "optionDescription": "Pricing or account questions"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ts-05-choice-decide",
+      "name": "3. Choice Decide — JSON state",
+      "type": "CUSTOM.typeSafe",
+      "typeVersion": 1,
+      "position": [
+        -180,
+        -480
+      ],
+      "credentials": {
+        "typeSafeApi": {
+          "id": "",
+          "name": "TypeSafe account"
+        }
+      },
+      "notes": "Expect one item containing the ranked options with the selected one marked."
+    },
+    {
+      "parameters": {
+        "resource": "choice",
+        "operation": "rank",
+        "state": "text",
+        "stateText": "={{ $json.message }}",
+        "candidatesMode": "fields",
+        "candidatesFields": {
+          "candidate": [
+            {
+              "rankCandidateName": "Integration setup",
+              "rankCandidateDescription": "Connecting an external account or API"
+            },
+            {
+              "rankCandidateName": "Billing question",
+              "rankCandidateDescription": "Charges, invoices, refunds"
+            },
+            {
+              "rankCandidateName": "Password reset",
+              "rankCandidateDescription": "Signing in or recovering an account"
+            }
+          ]
+        },
+        "rankInstructions": "Which topic best matches the request in the state?",
+        "options": {}
+      },
+      "id": "ts-06-choice-rank",
+      "name": "4. Choice Rank — candidates as rows",
+      "type": "CUSTOM.typeSafe",
+      "typeVersion": 1,
+      "position": [
+        40,
+        -480
+      ],
+      "credentials": {
+        "typeSafeApi": {
+          "id": "",
+          "name": "TypeSafe account"
+        }
+      },
+      "notes": "Expect candidates ordered by probability with the top match first."
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": true,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d1",
+              "name": "description",
+              "value": "Fixed the null check in the payment handler. Also refactored the retry loop while I was in there, and bumped the SDK version to clear a known timeout bug.",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "ts-07-diff",
+      "name": "Sample Diff",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -840,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "score",
+        "operation": "rate",
+        "state": "json",
+        "stateJson": "={{ { \"description\": $json.description } }}",
+        "instructions": "How severe is the bug described in `description`?",
+        "rateLevels": {
+          "rateLevel": [
+            {
+              "rateLevelDescription": "Cosmetic, no functional impact"
+            },
+            {
+              "rateLevelDescription": "Degraded feature, workaround exists"
+            },
+            {
+              "rateLevelDescription": "Blocking, no workaround"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ts-08-rate",
+      "name": "5. Score Rate",
+      "type": "CUSTOM.typeSafe",
+      "typeVersion": 1,
+      "position": [
+        -620,
+        -40
+      ],
+      "credentials": {
+        "typeSafeApi": {
+          "id": "",
+          "name": "TypeSafe account"
+        }
+      },
+      "notes": "Expect one item carrying the dimensions array with score, normalized value and legend."
+    },
+    {
+      "parameters": {
+        "resource": "score",
+        "operation": "composite",
+        "state": "json",
+        "stateJson": "={{ { \"description\": $json.description } }}",
+        "dimensionsMode": "fields",
+        "sharedLevelsMode": "fields",
+        "sharedLevels": {
+          "sharedLevel": [
+            {
+              "sharedLevelDescription": "Low"
+            },
+            {
+              "sharedLevelDescription": "Medium"
+            },
+            {
+              "sharedLevelDescription": "High"
+            }
+          ]
+        },
+        "dimensions": {
+          "dimension": [
+            {
+              "levels": {
+                "ownLevel": [
+                  {
+                    "ownLevelDescription": ""
+                  },
+                  {
+                    "ownLevelDescription": ""
+                  }
+                ]
+              },
+              "dimensionName": "clarity",
+              "dimensionInstructions": "How clearly is the change described in `description`?",
+              "dimensionLevelsSource": "shared"
+            },
+            {
+              "levels": {
+                "ownLevel": [
+                  {
+                    "ownLevelDescription": ""
+                  },
+                  {
+                    "ownLevelDescription": ""
+                  }
+                ]
+              },
+              "dimensionName": "scope",
+              "dimensionInstructions": "How much unrelated work is bundled into `description`?",
+              "dimensionLevelsSource": "shared"
+            }
+          ]
+        },
+        "weightsMode": "fields",
+        "weights": {
+          "weight": [
+            {
+              "weightDimension": "clarity",
+              "weightValue": 3
+            },
+            {
+              "weightDimension": "scope",
+              "weightValue": 1
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ts-09-composite-shared",
+      "name": "6. Composite — shared levels",
+      "type": "CUSTOM.typeSafe",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        -40
+      ],
+      "credentials": {
+        "typeSafeApi": {
+          "id": "",
+          "name": "TypeSafe account"
+        }
+      },
+      "notes": "Both dimensions reuse the Low/Medium/High shared scale, weighted 3:1. Expect a combinedScore."
+    },
+    {
+      "parameters": {
+        "resource": "score",
+        "operation": "composite",
+        "state": "json",
+        "stateJson": "={{ { \"description\": $json.description } }}",
+        "dimensionsMode": "fields",
+        "dimensions": {
+          "dimension": [
+            {
+              "levels": {
+                "ownLevel": [
+                  {
+                    "ownLevelDescription": "Unclear"
+                  },
+                  {
+                    "ownLevelDescription": "Mixed"
+                  },
+                  {
+                    "ownLevelDescription": "Clear"
+                  }
+                ]
+              },
+              "dimensionName": "clarity",
+              "dimensionInstructions": "How clearly is the change described in `description`?",
+              "dimensionLevelsSource": "own"
+            },
+            {
+              "levels": {
+                "ownLevel": [
+                  {
+                    "ownLevelDescription": "One change"
+                  },
+                  {
+                    "ownLevelDescription": "Several changes"
+                  }
+                ]
+              },
+              "dimensionName": "focus",
+              "dimensionInstructions": "How focused is `description` on a single change?",
+              "dimensionLevelsSource": "own"
+            }
+          ]
+        },
+        "weightsMode": "equal",
+        "options": {}
+      },
+      "id": "ts-10-composite-own",
+      "name": "7. Composite — own levels, equal weights",
+      "type": "CUSTOM.typeSafe",
+      "typeVersion": 1,
+      "position": [
+        -180,
+        -40
+      ],
+      "credentials": {
+        "typeSafeApi": {
+          "id": "",
+          "name": "TypeSafe account"
+        }
+      },
+      "notes": "Each dimension defines its own levels, and equal weights make combinedScore a plain average of the normalized values."
+    },
+    {
+      "parameters": {
+        "resource": "score",
+        "operation": "composite",
+        "state": "json",
+        "stateJson": "={{ { \"description\": $json.description } }}",
+        "dimensionsMode": "json",
+        "dimensionsJson": "={{ [ { \"name\": \"clarity\", \"instructions\": \"How clearly is the change described?\", \"levels\": [\"Unclear\", \"Mixed\", \"Clear\"] }, { \"name\": \"focus\", \"instructions\": \"How focused is it on a single change?\", \"levels\": [\"One change\", \"Several changes\"] } ] }}",
+        "weightsMode": "json",
+        "weightsJson": "={{ { \"clarity\": 2, \"focus\": 1 } }}",
+        "options": {}
+      },
+      "id": "ts-11-composite-json",
+      "name": "8. Composite — JSON dimensions",
+      "type": "CUSTOM.typeSafe",
+      "typeVersion": 1,
+      "position": [
+        40,
+        -40
+      ],
+      "credentials": {
+        "typeSafeApi": {
+          "id": "",
+          "name": "TypeSafe account"
+        }
+      },
+      "notes": "Dimensions and weights both come from JSON, which is the shape to use when they are generated upstream."
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "return [\n  { json: { message: 'URGENT: production is down and we are losing orders, please help immediately.' } },\n  { json: { message: 'Just wondering when the next release is planned, no rush.' } },\n  { json: { message: 'How do I change the email address on my account?' } }\n];"
+      },
+      "id": "ts-12-messages",
+      "name": "Sample Messages — 3 items",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -840,
+        400
+      ],
+      "notes": "Feeds three items into Evaluate Many to prove the packed single-call path."
+    },
+    {
+      "parameters": {
+        "resource": "evaluation",
+        "operation": "evaluateMany",
+        "state": "text",
+        "stateText": "={{ $json.message }}",
+        "questions": {
+          "question": [
+            {
+              "id": "urgency",
+              "questionType": "noul",
+              "trueDescription": "",
+              "falseDescription": "",
+              "questionInstructions": "Does the message convey urgency?"
+            },
+            {
+              "id": "topic",
+              "questionType": "choice",
+              "choiceOptions": {
+                "entry": [
+                  {
+                    "option": "outage",
+                    "description": "Something is broken or unavailable"
+                  },
+                  {
+                    "option": "release",
+                    "description": "Plans, timelines or releases"
+                  },
+                  {
+                    "option": "account",
+                    "description": "Profile, login or settings"
+                  }
+                ]
+              },
+              "questionInstructions": "What is the message about?"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ts-13-many",
+      "name": "9. Evaluate Many — one call for all items",
+      "type": "CUSTOM.typeSafe",
+      "typeVersion": 1,
+      "position": [
+        -620,
+        400
+      ],
+      "credentials": {
+        "typeSafeApi": {
+          "id": "",
+          "name": "TypeSafe account"
+        }
+      },
+      "notes": "All three items go out in ONE API call. Expect 6 items back, each tagged with itemIndex."
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "You classify support messages. Use the TypeSafe tool to decide which team should handle the message, then reply with the chosen team and its confidence.",
+        "options": {}
+      },
+      "id": "ts-14-agent",
+      "name": "10. AI Agent — needs a model",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -400,
+        400
+      ],
+      "notes": "ATTACH A CHAT MODEL to the model input before running. This exercises the generated TypeSafe Tool node."
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Decide which team should handle a support message. Input is the customer message. Returns the chosen team and its confidence.",
+        "resource": "choice",
+        "operation": "decide",
+        "state": "text",
+        "stateText": "={{ $json.query }}",
+        "instructions": "Which team should handle the request described in the state?",
+        "decisionOptions": {
+          "entry": [
+            {
+              "option": "billing",
+              "optionDescription": "Payment or subscription issues"
+            },
+            {
+              "option": "technical",
+              "optionDescription": "Bugs or integration problems"
+            },
+            {
+              "option": "sales",
+              "optionDescription": "Pricing or account questions"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ts-15-tool",
+      "name": "10a. TypeSafe Tool",
+      "type": "CUSTOM.typeSafeTool",
+      "typeVersion": 1,
+      "position": [
+        -620,
+        620
+      ],
+      "credentials": {
+        "typeSafeApi": {
+          "id": "",
+          "name": "TypeSafe account"
+        }
+      },
+      "notes": "Auto-generated from usableAsTool. Connected to the agent through the ai_tool connection."
+    }
+  ],
+  "connections": {
+    "Start Here": {
+      "main": [
+        [
+          {
+            "node": "Sample Ticket",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Sample Diff",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Sample Messages — 3 items",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "10. AI Agent — needs a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sample Ticket": {
+      "main": [
+        [
+          {
+            "node": "1. Evaluate — mixed questions",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "2. Noul — threshold",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "3. Choice Decide — JSON state",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "4. Choice Rank — candidates as rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sample Diff": {
+      "main": [
+        [
+          {
+            "node": "5. Score Rate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5. Score Rate": {
+      "main": [
+        [
+          {
+            "node": "6. Composite — shared levels",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "6. Composite — shared levels": {
+      "main": [
+        [
+          {
+            "node": "7. Composite — own levels, equal weights",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "7. Composite — own levels, equal weights": {
+      "main": [
+        [
+          {
+            "node": "8. Composite — JSON dimensions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sample Messages — 3 items": {
+      "main": [
+        [
+          {
+            "node": "9. Evaluate Many — one call for all items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "10a. TypeSafe Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "10. AI Agent — needs a model",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}
