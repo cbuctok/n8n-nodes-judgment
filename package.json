@@ -33,7 +33,8 @@
 		"n8n:logs": "docker compose logs -f n8n",
 		"n8n:down": "docker compose down",
 		"n8n:reset": "docker compose down -v && docker compose up -d --wait",
-		"release": "n8n-node release"
+		"release": "n8n-node release",
+		"prepublishOnly": "n8n-node prerelease"
 	},
 	"files": [
 		"dist"
