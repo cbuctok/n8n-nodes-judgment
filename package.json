@@ -1,5 +1,5 @@
 {
-	"name": "@evgreg/n8n-nodes-judgment",
+	"name": "n8n-nodes-judgment",
 	"version": "0.1.0",
 	"description": "Make typed judgements about text or application state: ask Choice, Score, and Noul questions and branch on the answers.",
 	"license": "MIT",
@@ -33,15 +33,11 @@
 		"n8n:logs": "docker compose logs -f n8n",
 		"n8n:down": "docker compose down",
 		"n8n:reset": "docker compose down -v && docker compose up -d --wait",
-		"release": "n8n-node release",
-		"prepublishOnly": "n8n-node prerelease"
+		"release": "n8n-node release"
 	},
 	"files": [
 		"dist"
 	],
-	"publishConfig": {
-		"access": "public"
-	},
 	"n8n": {
 		"n8nNodesApiVersion": 1,
 		"strict": true,

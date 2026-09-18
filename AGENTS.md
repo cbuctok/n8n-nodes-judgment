@@ -13,7 +13,7 @@ Three names that must stay in step, because n8n resolves one from the other at l
 
 | Thing | Value | Where |
 | --- | --- | --- |
-| npm package | `@evgreg/n8n-nodes-judgment` | `package.json` → `name` |
+| npm package | `n8n-nodes-judgment` | `package.json` → `name` |
 | Node | `judgment` (class `Judgment`) | `nodes/Judgment/Judgment.node.ts` |
 | Credential | `judgmentApi` (class `JudgmentApi`) | `credentials/JudgmentApi.credentials.ts` |
 
@@ -22,9 +22,12 @@ at compiled `dist/` paths, and the credential `name` is what workflows store in 
 `credentials` block. Renaming the credential type breaks every existing workflow that uses it, so
 treat `judgmentApi` as frozen once published.
 
-The package is **scoped**, which is why `package.json` carries
-`"publishConfig": { "access": "public" }`. Without it npm treats a scoped package as private and
-the release fails.
+The package name is unscoped and must stay that way: n8n's community-node installer looks the value
+up verbatim on the public registry, so `n8n-nodes-judgment` installs but `@evgreg/...` would be a
+different package. Do not add a `publishConfig.access` field; that only matters for scoped names.
+
+An earlier scoped publish (`@evgreg/n8n-nodes-judgment@0.1.0`) is listed in npm's search index but
+its registry document was never readable, so it cannot be installed. The unscoped name supersedes it.
 
 ## Commands
 

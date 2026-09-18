@@ -19,6 +19,15 @@ The node name is **Judgment**; the credential is **Judgment API**.
 
 Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes/installation/) in the n8n community nodes documentation.
 
+The package name to install is:
+
+```
+n8n-nodes-judgment
+```
+
+Enter it exactly as written in **Settings → Community Nodes → Install**. It is unscoped, so there is
+no `@org/` prefix.
+
 ## Operations
 
 The node is organised as **Resource → Operation**.
