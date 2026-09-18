@@ -1,0 +1,480 @@
+{
+  "name": "Grade AI answers and route the shaky ones with Judgment",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Grade AI answers and route the shaky ones with Judgment\n\n### How it works\n\n1. Generates three AI answers, each with the question it was meant to answer and a reference answer to judge it against.\n2. Grades every answer in one judgment call that asks six questions at once: four yes/no checks, one clarity score, and one ship/edit/reject choice.\n3. Normalizes each answer into a grade, an answer ID, a value, a 0-1 score, and the judge's confidence.\n4. Decides whether each grade is trusted: by confidence for Choice and Score answers, by distance from 0.5 for Noul answers.\n5. Routes grades the judge was sure of to a reporting path, and shaky grades to human review.\n\n### Setup steps\n\n- [ ] Add your **Judgment API** credential to the *Grade Answers* node, and set the Base URL if you are not using the default provider.\n- [ ] Install `n8n-nodes-judgment` from **Settings \u2192 Community Nodes**. See the note beside the first node.\n- [ ] Replace *Sample Answers* with your own evaluation set, keeping the question, answer, and reference fields.\n- [ ] Review the 0.8 confidence threshold and the 0.25-0.75 Noul band in the *Verdict* node.\n- [ ] Point *Trusted Grades* at your scoreboard, and *Needs a Human Look* at wherever a person reviews work.\n\n### Customization\n\nChange the rubric by editing the six questions in *Grade Answers*: swap them, add a dimension, or drop the ones your set does not need. The trust rules are one expression in *Verdict*, so re-tuning them never needs a new inference run.\n\n### Reading the output\n\nOne row per question, six per answer. `score0to1` is quality; `trust` is certainty, so a `reject` marked `trusted` is the most actionable row.",
+        "height": 896,
+        "width": 480
+      },
+      "name": "How This Works",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -2066,
+        -55
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Install the community node first\n\n**Settings \u2192 Community Nodes \u2192 Install \u2192** `n8n-nodes-judgment`, then add your API key on the **Judgment API** credential. Self-hosted only: community nodes cannot run on n8n Cloud.",
+        "height": 320,
+        "width": 180,
+        "color": 7
+      },
+      "name": "Install Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1490,
+        185
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## How trust is decided\n\nChoice and Score answers are shaky below 0.8 confidence. Noul answers carry no confidence, so they are shaky between 0.25 and 0.75.",
+        "height": 320,
+        "width": 1020,
+        "color": 7
+      },
+      "name": "Verdict Rules",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1250,
+        185
+      ]
+    },
+    {
+      "parameters": {},
+      "name": "When Clicking Test Workflow",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1400,
+        400
+      ],
+      "notes": "Run this workflow to see all three verdicts at once."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Three AI answers to grade, each with the question it was meant to answer\n// and the reference answer to judge it against.\n//\n// The three are deliberately different:\n//   1. correct and well written\n//   2. plausible but makes a claim the reference does not support\n//   3. confidently wrong and off topic\n//\n// Replace this node with your own source: a Google Sheet of evaluation\n// results, or the output of the node that calls your LLM.\nreturn [\n  {\n    json: {\n      question: 'What is the refund window for a duplicate charge?',\n      answer: 'Duplicate charges can be refunded within 30 days of the charge date.',\n      reference:\n        'Duplicate charges are refundable within 30 days of the charge date. After 30 days, request a chargeback from your bank.',\n    },\n  },\n  {\n    json: {\n      question: 'Can I export my invoices as CSV?',\n      answer:\n        'Yes. Export from Settings, then Billing, then Export. CSV and PDF are both available, and exports are kept for 90 days.',\n      reference:\n        'Invoices can be exported as CSV from Settings, then Billing, then Export. PDF export is also available.',\n    },\n  },\n  {\n    json: {\n      question: 'Does the Pro plan include priority support?',\n      answer:\n        'Yes. Every plan including Starter has round-the-clock priority support with a guaranteed one hour response.',\n      reference:\n        'Priority support is included on Pro and Enterprise plans. Response times are four hours for Pro and one hour for Enterprise.',\n    },\n  },\n];"
+      },
+      "name": "Sample Answers",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1160,
+        400
+      ],
+      "notes": "Replace with your own source of answers to grade."
+    },
+    {
+      "parameters": {
+        "state": "fields",
+        "stateFields": {
+          "field": [
+            {
+              "fieldName": "question",
+              "fieldValue": "={{ $json.question }}"
+            },
+            {
+              "fieldName": "answer",
+              "fieldValue": "={{ $json.answer }}"
+            },
+            {
+              "fieldName": "reference",
+              "fieldValue": "={{ $json.reference }}"
+            }
+          ]
+        },
+        "questions": {
+          "question": [
+            {
+              "id": "correct",
+              "questionInstructions": "Does `answer` agree with `reference`? Judge only the fact stated, not the wording.",
+              "trueDescription": "The answer states the same fact as the reference.",
+              "falseDescription": "The answer contradicts the reference, or states a different fact.",
+              "choiceOptions": {
+                "entry": [
+                  {},
+                  {}
+                ]
+              },
+              "levels": {
+                "questionLevel": [
+                  {},
+                  {}
+                ]
+              }
+            },
+            {
+              "id": "complete",
+              "questionInstructions": "Does `answer` address every part of `question`?",
+              "trueDescription": "Every part of the question is answered.",
+              "falseDescription": "At least one part of the question is left unanswered.",
+              "choiceOptions": {
+                "entry": [
+                  {},
+                  {}
+                ]
+              },
+              "levels": {
+                "questionLevel": [
+                  {},
+                  {}
+                ]
+              }
+            },
+            {
+              "id": "grounded",
+              "questionInstructions": "Is every claim in `answer` supported by `reference`?",
+              "trueDescription": "Every claim in the answer is supported by the reference.",
+              "falseDescription": "The answer adds a claim the reference does not support.",
+              "choiceOptions": {
+                "entry": [
+                  {},
+                  {}
+                ]
+              },
+              "levels": {
+                "questionLevel": [
+                  {},
+                  {}
+                ]
+              }
+            },
+            {
+              "id": "relevant",
+              "questionInstructions": "Is `answer` an answer to `question`, rather than to a different question?",
+              "trueDescription": "The answer is about the question that was asked.",
+              "falseDescription": "The answer is about something else.",
+              "choiceOptions": {
+                "entry": [
+                  {},
+                  {}
+                ]
+              },
+              "levels": {
+                "questionLevel": [
+                  {},
+                  {}
+                ]
+              }
+            },
+            {
+              "id": "clarity",
+              "questionType": "score",
+              "questionInstructions": "How clearly is `answer` written for a customer?",
+              "choiceOptions": {
+                "entry": [
+                  {},
+                  {}
+                ]
+              },
+              "levels": {
+                "questionLevel": [
+                  {
+                    "questionLevelDescription": "Confusing, or the reader cannot tell what is being claimed"
+                  },
+                  {
+                    "questionLevelDescription": "Understandable, but wordy or poorly organised"
+                  },
+                  {
+                    "questionLevelDescription": "Clear and direct"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "overall",
+              "questionType": "choice",
+              "questionInstructions": "Would you ship `answer` to a customer as it stands?",
+              "choiceOptions": {
+                "entry": [
+                  {
+                    "option": "ship",
+                    "optionDescription": "Good enough to send to a user as it stands"
+                  },
+                  {
+                    "option": "edit",
+                    "optionDescription": "Right idea, but the wording should be improved first"
+                  },
+                  {
+                    "option": "reject",
+                    "optionDescription": "Wrong, unsupported, or off topic"
+                  }
+                ]
+              },
+              "levels": {
+                "questionLevel": [
+                  {},
+                  {}
+                ]
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Grade Answers",
+      "type": "n8n-nodes-judgment.judgment",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        400
+      ],
+      "credentials": {
+        "judgmentApi": {
+          "id": "",
+          "name": "Judgment API"
+        }
+      },
+      "notes": "Runs once per answer. All six questions still go out in ONE API call per item, and the questions see the same state."
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "grade-id",
+              "name": "grade",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "answer-id",
+              "name": "answerId",
+              "value": "={{ $json.raw.request_id ?? $json.requestId }}",
+              "type": "string"
+            },
+            {
+              "id": "value-out",
+              "name": "value",
+              "value": "={{ $json.type === 'choice' ? $json.choice : $json.value }}",
+              "type": "string"
+            },
+            {
+              "id": "score-out",
+              "name": "score0to1",
+              "value": "={{ $json.type === 'noul' ? $json.value : $json.type === 'choice' ? $json.answer.probabilities[$json.choice] : $json.value / (Object.keys($json.answer.legend).length - 1) }}",
+              "type": "number"
+            },
+            {
+              "id": "judge-confidence",
+              "name": "judgeConfidence",
+              "value": "={{ $json.confidence }}",
+              "type": "number"
+            },
+            {
+              "id": "trust-rule",
+              "name": "trust",
+              "value": "={{ $json.type === 'noul' ? ($json.value >= 0.25 && $json.value <= 0.75 ? 'needs review' : 'trusted') : ($json.confidence !== null && $json.confidence >= 0.8 ? 'trusted' : 'needs review') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "name": "Verdict",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -320,
+        400
+      ],
+      "notes": "Puts the trust rules in one place: Noul is judged by distance from 0.5, Choice and Score by confidence."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "trust-check",
+              "leftValue": "={{ $json.trust }}",
+              "rightValue": "trusted",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Is the Grade Trusted?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        80,
+        400
+      ],
+      "notes": "One word decides the route. Swap the Set node's rule and this node needs no change."
+    },
+    {
+      "parameters": {
+        "content": "## Trusted grades\n\n15 of the 18 rows. Reportable as-is, including answer 3's `overall` \u2014 a `reject` at 0.98 confidence.",
+        "height": 560,
+        "width": 620,
+        "color": 7
+      },
+      "name": "Trusted Output",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -10,
+        -55
+      ]
+    },
+    {
+      "parameters": {},
+      "name": "Trusted Grades",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        520,
+        160
+      ],
+      "notes": "Grades the judge was sure of. This is what you log and report on."
+    },
+    {
+      "parameters": {
+        "content": "## Needs a human look\n\n3 of the 18 rows. Two `overall` grades at 0.72 and 0.45 confidence, and one `clarity` at 0.41.",
+        "height": 320,
+        "width": 420,
+        "color": 7
+      },
+      "name": "Needs the Human",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        230,
+        605
+      ]
+    },
+    {
+      "parameters": {},
+      "name": "Needs a Human Look",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        560,
+        820
+      ],
+      "notes": "Grades split between yes and no, or given with low confidence. These are the rows where automating the judgement would be a guess."
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": true,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "reason",
+              "name": "reviewReason",
+              "value": "={{ $json.trust }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Flag for Review",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        320,
+        820
+      ],
+      "notes": "Adds the reason the grade needs a person before it reaches the queue."
+    }
+  ],
+  "connections": {
+    "When Clicking Test Workflow": {
+      "main": [
+        [
+          {
+            "node": "Sample Answers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sample Answers": {
+      "main": [
+        [
+          {
+            "node": "Grade Answers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Grade Answers": {
+      "main": [
+        [
+          {
+            "node": "Verdict",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verdict": {
+      "main": [
+        [
+          {
+            "node": "Is the Grade Trusted?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is the Grade Trusted?": {
+      "main": [
+        [
+          {
+            "node": "Trusted Grades",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Needs a Human Look",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs a Human Look": {
+      "main": [
+        [
+          {
+            "node": "Flag for Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "pinData": {}
+}
