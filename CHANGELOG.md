@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.1
+
+- Renamed the package to the unscoped `n8n-nodes-judgment`, which is the name to install. The
+  previous scoped publication could not be resolved from the registry.
+- Replaced the placeholder icon with the scales-of-justice artwork.
+- Publishing now runs from CI, so releases carry a provenance attestation.
+
 ## 0.1.0
 
 - First release. Wraps the TypeSafe System One API behind a vendor-neutral Judgment node.
