@@ -46,6 +46,17 @@ All tooling goes through `@n8n/node-cli` (`n8n-node`), exposed as npm scripts.
 | `npm run n8n:reset` | Wipes the n8n volume and starts clean. |
 | `npm run release` | `release-it`: version bump, changelog, commit, tag, push. Does not publish locally. |
 
+### Releasing
+
+`npm run release` pushes a tag. `publish.yml` then **stages** the package with a provenance
+attestation and stops — the version is not installable until a maintainer approves it at
+npmjs.com → package → **Staged versions**. Nothing goes live from a tag alone.
+
+CI does not call `n8n-node release`. In CI that command runs a hardcoded `npm publish`, which cannot
+be redirected to the staging endpoint, so the workflow runs lint, build and `npm stage publish`
+itself. The consequence is that the lint and build steps live in `publish.yml` as well as in
+`ci.yml`; change one and check the other.
+
 **There is no test runner.** No `test` script, no vitest/jest, no `*.test.ts`. CI runs exactly
 `npm ci && npm run lint && npm run build`. Behavioural verification goes through `smoke`, `check:fields`
 and `e2e` above.
