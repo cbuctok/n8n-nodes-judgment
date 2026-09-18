@@ -44,7 +44,7 @@ All tooling goes through `@n8n/node-cli` (`n8n-node`), exposed as npm scripts.
 | `npm run e2e` | Drives the built node through a real n8n in Docker. |
 | `npm run n8n:up` / `n8n:logs` / `n8n:down` | Start, follow and stop the Docker n8n. |
 | `npm run n8n:reset` | Wipes the n8n volume and starts clean. |
-| `npm run release` | `release-it`: version bump, changelog, commit, tag, push. Does not publish locally. |
+| `npm run release` | `scripts/release.mjs`: version bump, changelog stub, commit, tag, push. Does not publish. |
 
 ### Releasing
 
@@ -56,6 +56,16 @@ CI does not call `n8n-node release`. In CI that command runs a hardcoded `npm pu
 be redirected to the staging endpoint, so the workflow runs lint, build and `npm stage publish`
 itself. The consequence is that the lint and build steps live in `publish.yml` as well as in
 `ci.yml`; change one and check the other.
+
+**`n8n-node release` is unusable and `release-it` has been removed.** The command passes `-n` to
+release-it, and no release-it major ever accepted that flag, so it fails before the first prompt. It
+also passes config keys such as `--git.requireBranch` on the command line, which release-it expects
+in a config file. `@n8n/node-cli` does not depend on release-it at all — it shells out to whatever
+`release-it` is on the PATH — which is how the two drifted apart unnoticed. `scripts/release.mjs`
+replaces it: bump, changelog stub, commit, tag, push. It refuses on a dirty tree, an unpushed
+commit, a branch other than `dev`/`master`, or an existing tag, because a tag is a promise about a
+commit. It leaves the changelog body empty on purpose; the notes are the one part that cannot be
+derived.
 
 **There is no test runner.** No `test` script, no vitest/jest, no `*.test.ts`. CI runs exactly
 `npm ci && npm run lint && npm run build`. Behavioural verification goes through `smoke`, `check:fields`

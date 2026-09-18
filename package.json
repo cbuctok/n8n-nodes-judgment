@@ -33,7 +33,7 @@
 		"n8n:logs": "docker compose logs -f n8n",
 		"n8n:down": "docker compose down",
 		"n8n:reset": "docker compose down -v && docker compose up -d --wait",
-		"release": "n8n-node release",
+		"release": "node scripts/release.mjs",
 		"prepublishOnly": "n8n-node prerelease"
 	},
 	"files": [
@@ -54,7 +54,6 @@
 		"@typesafe-ai/sdk": "^0.6.0",
 		"eslint": "9.39.4",
 		"prettier": "^3.9.7",
-		"release-it": "^21.0.3",
 		"typescript": "5.9.3"
 	},
 	"peerDependencies": {
