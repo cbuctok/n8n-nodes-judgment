@@ -105,10 +105,7 @@ function ensureReleasable() {
 	if (drift !== '0') fail(`${drift} unpushed commit(s) on ${branch}; push first`);
 	if (behind !== '0') fail(`local ${branch} is ${behind} commit(s) behind origin; pull first`);
 
-	const version = readPackage().version;
-	if (git('tag', '-l', version)) fail(`tag ${version} already exists`);
-
-	return { branch, version };
+	return { branch, version: readPackage().version };
 }
 
 async function chooseBump(current) {
@@ -121,9 +118,16 @@ async function chooseBump(current) {
 	options.forEach((option, index) => console.log(`  ${index + 1}) ${option}`));
 	console.log();
 
+	// Resolves on both the answer and `close`. A pseudoterminal can deliver the input without ever
+	// signalling close, and a promise that only listens for one of them hangs the whole script.
 	const readline = createInterface({ input: process.stdin, output: process.stdout });
-	const answer = await new Promise((done) => readline.question('  Choose a bump [1]: ', done));
-	readline.close();
+	const answer = await new Promise((done) => {
+		readline.question('  Choose a bump [1]: ', (reply) => {
+			readline.close();
+			done(reply);
+		});
+		readline.on('close', () => done(''));
+	});
 
 	const trimmed = answer.trim();
 	if (trimmed === '') return BUMPS[0];
@@ -133,36 +137,49 @@ async function chooseBump(current) {
 	return BUMPS[index - 1];
 }
 
-const { branch, version: current } = ensureReleasable();
-const bump = await chooseBump(current);
-const next = bumpVersion(current, bump);
+async function main() {
+	const { branch, version: current } = ensureReleasable();
+	const bump = await chooseBump(current);
+	const next = bumpVersion(current, bump);
 
-console.log(`\n  ${branch}: ${current} -> ${next}\n`);
-console.log('  Edit CHANGELOG.md, then commit. The tag is pushed for you.\n');
+	// Checked against the version being released rather than the one in package.json, which is
+	// always the previously released version. Testing the current one would refuse every release.
+	if (git('tag', '-l', next)) fail(`tag ${next} already exists; pick a larger bump`);
 
-writeVersion(next);
-writeChangelog(next);
+	console.log(`\n  ${branch}: ${current} -> ${next}\n`);
+	console.log('  Edit CHANGELOG.md, then commit. The tag is pushed for you.\n');
 
-git('add', 'package.json', 'CHANGELOG.md', 'package-lock.json');
-git('commit', '-m', `Release ${next}`);
-git('tag', next);
+	writeVersion(next);
+	writeChangelog(next);
 
-const push = () => {
-	git('push', 'origin', branch);
-	git('push', 'origin', next);
-};
+	// `git add` aborts on a path that does not exist, and package-lock.json is not guaranteed to be
+	// tracked. Adding the version and changelog explicitly, then staging whatever else a dependency
+	// bump touched, keeps a missing lockfile from failing the release after the version is written.
+	git('add', 'package.json', 'CHANGELOG.md');
+	try {
+		git('add', 'package-lock.json');
+	} catch {
+		// No lockfile in this repository; nothing to stage.
+	}
 
-try {
-	push();
-} catch {
-	fail(
-		`release ${next} is committed and tagged locally but not pushed.\n` +
-			`  Push it by hand once the reason is clear:\n` +
-			`    git push origin ${branch} && git push origin ${next}\n` +
-			`  Or undo it entirely:\n` +
-			`    git tag -d ${next} && git reset --hard HEAD~1`,
-	);
+	git('commit', '-m', `Release ${next}`);
+	git('tag', next);
+
+	try {
+		git('push', 'origin', branch);
+		git('push', 'origin', next);
+	} catch {
+		fail(
+			`release ${next} is committed and tagged locally but not pushed.\n` +
+				`  Push it by hand once the reason is clear:\n` +
+				`    git push origin ${branch} && git push origin ${next}\n` +
+				`  Or undo it entirely:\n` +
+				`    git tag -d ${next} && git reset --hard HEAD~1`,
+		);
+	}
+
+	console.log(`\n  Pushed ${next}. CI is staging it on npm; approve it at`);
+	console.log('  npmjs.com -> the package -> Staged versions -> Approve\n');
 }
 
-console.log(`\n  Pushed ${next}. CI is staging it on npm; approve it at`);
-console.log('  npmjs.com -> the package -> Staged versions -> Approve\n');
+await main();
