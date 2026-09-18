@@ -1,0 +1,531 @@
+{
+  "name": "Verify extracted contract terms and flag the fabricated ones with Judgment",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Verify extracted contract terms and flag the fabricated ones with Judgment\n\n### How it works\n\n1. Builds two worked examples of the same contract extraction: one Set node with values that match the document, and one with two fields changed.\n2. Merges them into a single stream, so both records are verified side by side.\n3. Checks every extracted value against the source in one judgment call, asking two questions per field: is this value absent from the document, and does the document state a different one.\n4. Reshapes the answers into a field name, a check name, the extracted value, a probability, and a verdict.\n5. Sends any field the verifier doubted through *Explain the Flag* to the *Review Queue*, and treats the rest as confirmed.\n\n### Setup steps\n\n- [ ] Add your **Judgment API** credential to the *Verify Extract* node, and set the Base URL if you are not using the default provider.\n- [ ] Install `n8n-nodes-judgment` from **Settings \u2192 Community Nodes**. See the note beside the first node.\n- [ ] Replace *Source Document* and *Fabricated Extraction* with your own extraction output, keeping the `source_text` and one field per extracted value.\n- [ ] Add two questions to *Verify Extract* for each field you want checked, following the existing pattern.\n- [ ] Review the 0.5 threshold in *Reshape Checks* against the cost of a wrong field reaching production.\n\n### Customization\n\nField names are the keys of the `extraction` object, so adding a field means adding its two questions. The check name carries the field, which is why one call covers a whole record.\n\nTo build the full cascade, replace *Review Queue* with a stronger reasoning model that re-extracts just the flagged fields.",
+        "height": 1000,
+        "width": 480
+      },
+      "name": "How This Works",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1984,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Install the community node first\n\n**Settings \u2192 Community Nodes \u2192 Install \u2192** `n8n-nodes-judgment`, then add your API key on the **Judgment API** credential. Self-hosted only: community nodes cannot run on n8n Cloud.",
+        "height": 200,
+        "width": 480,
+        "color": 7
+      },
+      "name": "Install Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1900,
+        1136
+      ]
+    },
+    {
+      "parameters": {},
+      "name": "When Clicking Test Workflow",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1408,
+        336
+      ],
+      "notes": "Run this workflow to verify both sample records."
+    },
+    {
+      "parameters": {
+        "resource": "evaluation",
+        "operation": "evaluate",
+        "state": "fields",
+        "stateFields": {
+          "field": [
+            {
+              "fieldName": "source_text",
+              "fieldValue": "={{ $json.source_text }}"
+            },
+            {
+              "fieldName": "extraction",
+              "fieldValue": "={{ { counterparty: $json.counterparty, term_months: $json.term_months, annual_fee_usd: $json.annual_fee_usd, notice_days: $json.notice_days, governing_law: $json.governing_law } }}"
+            }
+          ]
+        },
+        "questions": {
+          "question": [
+            {
+              "id": "counterparty::not_in_source",
+              "questionType": "noul",
+              "trueDescription": "The source does not contain this value.",
+              "falseDescription": "The source contains this value.",
+              "questionInstructions": "The `extraction.counterparty` value is claimed to come from `source_text`. Is that value absent from the source, or drawn from text that does not state it?"
+            },
+            {
+              "id": "counterparty::wrong_value",
+              "questionType": "noul",
+              "trueDescription": "The source states a different value.",
+              "falseDescription": "The source states this value, or does not address it.",
+              "questionInstructions": "Judging only the fields `source_text` does state: does the source give a different `extraction.counterparty` value from the one extracted?"
+            },
+            {
+              "id": "term_months::not_in_source",
+              "questionType": "noul",
+              "trueDescription": "The source does not contain this value.",
+              "falseDescription": "The source contains this value.",
+              "questionInstructions": "The `extraction.term_months` value is claimed to come from `source_text`. Is that value absent from the source, or drawn from text that does not state it?"
+            },
+            {
+              "id": "term_months::wrong_value",
+              "questionType": "noul",
+              "trueDescription": "The source states a different value.",
+              "falseDescription": "The source states this value, or does not address it.",
+              "questionInstructions": "Judging only the fields `source_text` does state: does the source give a different `extraction.term_months` value from the one extracted?"
+            },
+            {
+              "id": "annual_fee_usd::not_in_source",
+              "questionType": "noul",
+              "trueDescription": "The source does not contain this value.",
+              "falseDescription": "The source contains this value.",
+              "questionInstructions": "The `extraction.annual_fee_usd` value is claimed to come from `source_text`. Is that value absent from the source, or drawn from text that does not state it?"
+            },
+            {
+              "id": "annual_fee_usd::wrong_value",
+              "questionType": "noul",
+              "trueDescription": "The source states a different value.",
+              "falseDescription": "The source states this value, or does not address it.",
+              "questionInstructions": "Judging only the fields `source_text` does state: does the source give a different `extraction.annual_fee_usd` value from the one extracted?"
+            },
+            {
+              "id": "notice_days::not_in_source",
+              "questionType": "noul",
+              "trueDescription": "The source does not contain this value.",
+              "falseDescription": "The source contains this value.",
+              "questionInstructions": "The `extraction.notice_days` value is claimed to come from `source_text`. Is that value absent from the source, or drawn from text that does not state it?"
+            },
+            {
+              "id": "notice_days::wrong_value",
+              "questionType": "noul",
+              "trueDescription": "The source states a different value.",
+              "falseDescription": "The source states this value, or does not address it.",
+              "questionInstructions": "Judging only the fields `source_text` does state: does the source give a different `extraction.notice_days` value from the one extracted?"
+            },
+            {
+              "id": "governing_law::not_in_source",
+              "questionType": "noul",
+              "trueDescription": "The source does not contain this value.",
+              "falseDescription": "The source contains this value.",
+              "questionInstructions": "The `extraction.governing_law` value is claimed to come from `source_text`. Is that value absent from the source, or drawn from text that does not state it?"
+            },
+            {
+              "id": "governing_law::wrong_value",
+              "questionType": "noul",
+              "trueDescription": "The source states a different value.",
+              "falseDescription": "The source states this value, or does not address it.",
+              "questionInstructions": "Judging only the fields `source_text` does state: does the source give a different `extraction.governing_law` value from the one extracted?"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Verify Extract",
+      "type": "n8n-nodes-judgment.judgment",
+      "typeVersion": 1,
+      "position": [
+        -720,
+        336
+      ],
+      "credentials": {
+        "judgmentApi": {
+          "id": "",
+          "name": "Judgment API"
+        }
+      },
+      "notes": "Two questions per field, ten in total, all answered in ONE API call per record. Each question names the field it checks."
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": true,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "keep-record",
+              "name": "record",
+              "value": "={{ $('Two Records').item.json.record }}",
+              "type": "string"
+            },
+            {
+              "id": "keep-field",
+              "name": "field",
+              "value": "={{ $json.id.split('::')[0] }}",
+              "type": "string"
+            },
+            {
+              "id": "keep-check",
+              "name": "check",
+              "value": "={{ $json.id.split('::')[1] }}",
+              "type": "string"
+            },
+            {
+              "id": "keep-extracted",
+              "name": "extractedValue",
+              "value": "={{ $('Two Records').item.json[$json.id.split('::')[0]] }}",
+              "type": "string"
+            },
+            {
+              "id": "keep-risk",
+              "name": "risk",
+              "value": "={{ $json.value }}",
+              "type": "number"
+            },
+            {
+              "id": "keep-verdict",
+              "name": "verdict",
+              "value": "={{ $json.value >= 0.5 ? 'needs review' : 'confirmed' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Reshape Checks",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -480,
+        336
+      ],
+      "notes": "Both halves of the question ID carry information, so the field name and the check name are split back out here."
+    },
+    {
+      "parameters": {},
+      "name": "Review Queue",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        340,
+        216
+      ],
+      "notes": "Fields the verifier doubted. Re-extract them with a stronger model, or send them to a person."
+    },
+    {
+      "parameters": {},
+      "name": "Confirmed",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        80,
+        480
+      ],
+      "notes": "The cheap extraction stood up to verification, so write it to your system of record here."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "verdict-check",
+              "leftValue": "={{ $json.verdict }}",
+              "rightValue": "needs review",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Is the Field in Doubt?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -240,
+        336
+      ],
+      "notes": "One word decides the route. Lower the threshold in Reshape Checks and more fields come down the review path."
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": true,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "reason",
+              "name": "reviewReason",
+              "value": "={{ $json.check === 'not_in_source' ? 'Value not found in the source document' : 'Source states a different value' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Explain the Flag",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        80,
+        216
+      ],
+      "notes": "Turns the check name into a sentence a reviewer can act on."
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "record-a",
+              "name": "record",
+              "value": "agreement-2026-0147",
+              "type": "string"
+            },
+            {
+              "id": "source",
+              "name": "source_text",
+              "value": "Annual maintenance agreement between Northwind Labs and Cobalt Facilities.\n\nTerm: 24 months, commencing 1 March 2026.\nAnnual fee: 48,000 USD, invoiced quarterly.\nNotice period: 60 days written notice from either party.\nGoverning law: Sweden.",
+              "type": "string"
+            },
+            {
+              "id": "cp",
+              "name": "counterparty",
+              "value": "Cobalt Facilities",
+              "type": "string"
+            },
+            {
+              "id": "term",
+              "name": "term_months",
+              "value": 24,
+              "type": "number"
+            },
+            {
+              "id": "fee",
+              "name": "annual_fee_usd",
+              "value": 48000,
+              "type": "number"
+            },
+            {
+              "id": "notice",
+              "name": "notice_days",
+              "value": 60,
+              "type": "number"
+            },
+            {
+              "id": "law",
+              "name": "governing_law",
+              "value": "Sweden",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Source Document",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1184,
+        240
+      ],
+      "notes": "The document to check against, and the first extraction. These values match the source."
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "record-b",
+              "name": "record",
+              "value": "agreement-2026-0148",
+              "type": "string"
+            },
+            {
+              "id": "source-copy",
+              "name": "source_text",
+              "value": "={{ $json.source_text }}",
+              "type": "string"
+            },
+            {
+              "id": "cp2",
+              "name": "counterparty",
+              "value": "Cobalt Facilities",
+              "type": "string"
+            },
+            {
+              "id": "term2",
+              "name": "term_months",
+              "value": 24,
+              "type": "number"
+            },
+            {
+              "id": "fee2",
+              "name": "annual_fee_usd",
+              "value": 48000,
+              "type": "number"
+            },
+            {
+              "id": "notice2",
+              "name": "notice_days",
+              "value": 90,
+              "type": "number"
+            },
+            {
+              "id": "law2",
+              "name": "governing_law",
+              "value": "Norway",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Fabricated Extraction",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1184,
+        432
+      ],
+      "notes": "The same document, but two fields are wrong: 90 days where the contract says 60, and Norway where it says Sweden."
+    },
+    {
+      "parameters": {
+        "mode": "append",
+        "numberInputs": 2,
+        "options": {}
+      },
+      "name": "Two Records",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -960,
+        336
+      ],
+      "notes": "One item per extraction, so both are verified side by side."
+    }
+  ],
+  "connections": {
+    "When Clicking Test Workflow": {
+      "main": [
+        [
+          {
+            "node": "Source Document",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fabricated Extraction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Source Document": {
+      "main": [
+        [
+          {
+            "node": "Two Records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fabricated Extraction": {
+      "main": [
+        [
+          {
+            "node": "Two Records",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Two Records": {
+      "main": [
+        [
+          {
+            "node": "Verify Extract",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Extract": {
+      "main": [
+        [
+          {
+            "node": "Reshape Checks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reshape Checks": {
+      "main": [
+        [
+          {
+            "node": "Is the Field in Doubt?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is the Field in Doubt?": {
+      "main": [
+        [
+          {
+            "node": "Explain the Flag",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Confirmed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Explain the Flag": {
+      "main": [
+        [
+          {
+            "node": "Review Queue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

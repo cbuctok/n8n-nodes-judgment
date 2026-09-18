@@ -29,6 +29,8 @@
 		"check:fields": "node scripts/check-node-fields.mjs",
 		"smoke": "node scripts/smoke.mjs",
 		"e2e": "node scripts/e2e-n8n.mjs",
+		"verify:template": "node scripts/verify-template.mjs",
+		"check:template": "node .crush/skills/n8n-template-submission/scripts/validate-template.mjs",
 		"n8n:up": "docker compose up -d --wait",
 		"n8n:logs": "docker compose logs -f n8n",
 		"n8n:down": "docker compose down",
