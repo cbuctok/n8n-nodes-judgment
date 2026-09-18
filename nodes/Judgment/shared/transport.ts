@@ -1,6 +1,6 @@
 import type { IDataObject } from 'n8n-workflow';
 
-import { TYPESAFE_API_BASE_URL } from './types';
+import { DEFAULT_API_BASE_URL } from './types';
 import type { EntryType, Question } from './types';
 
 export interface QuestionUsage extends IDataObject {
@@ -65,7 +65,7 @@ export interface TransportContext {
 export type Transport = (request: QuestionRequest) => Promise<QuestionAnswers>;
 
 /** API root used when the credential does not override it. */
-const DEFAULT_BASE_URL = TYPESAFE_API_BASE_URL;
+const DEFAULT_BASE_URL = DEFAULT_API_BASE_URL;
 
 interface FullHttpResponse {
 	body: unknown;
@@ -85,13 +85,13 @@ function readHeader(headers: Record<string, unknown>, key: string): string | und
 /**
  * Calls `POST /v1/systemone` through n8n's authenticated HTTP helper.
  *
- * The request goes through `httpRequestWithAuthentication` rather than a TypeSafe SDK client on
+ * The request goes through `httpRequestWithAuthentication` rather than a provider SDK client on
  * purpose: the SDK resolves its API key from the process environment or a constructor argument,
  * and neither fits how n8n stores credentials. The helper also brings n8n's proxy support, pinned
  * node options, and timeout behaviour along for free.
  */
 export function createTransport(context: TransportContext): Transport {
-	const credentialType = context.credentialType ?? 'typeSafeApi';
+	const credentialType = context.credentialType ?? 'judgmentApi';
 	const baseUrl = (context.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, '');
 
 	return async (request: QuestionRequest): Promise<QuestionAnswers> => {

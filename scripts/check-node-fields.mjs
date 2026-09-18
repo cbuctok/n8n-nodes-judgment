@@ -10,7 +10,7 @@
  * Slack node has dozens), so it is not a rule on its own; it is worth a second look because a
  * condition that cannot resolve at that point is one way a field goes missing.
  *
- *   node scripts/check-node-fields.mjs                       # this package's TypeSafe node
+ *   node scripts/check-node-fields.mjs                       # this package's Judgment node
  *   node scripts/check-node-fields.mjs <path-to-node.js>     # any compiled node
  */
 import { createRequire } from 'node:module';
@@ -86,10 +86,10 @@ if (target) {
 	checkNode(cls, target);
 	console.log(`checked ${target}`);
 } else {
-	const modulePath = resolve(here, '../dist/nodes/TypeSafe/TypeSafe.node.js');
+	const modulePath = resolve(here, '../dist/nodes/Judgment/Judgment.node.js');
 	const cls = loadNodeClass(modulePath);
-	checkNode(cls, 'TypeSafe');
-	console.log('checked TypeSafe');
+	checkNode(cls, 'Judgment');
+	console.log('checked Judgment');
 }
 
 if (warnings.length) {

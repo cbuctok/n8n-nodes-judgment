@@ -13,27 +13,28 @@ import { noulDescription, executeNoul } from './resources/noul';
 import { executeScore, scoreDescription } from './resources/score';
 
 /**
- * `typeSafeApi` requests carry the authentication mode chosen on the node, so the credential
+ * `judgmentApi` requests carry the authentication mode chosen on the node, so the credential
  * reference is gated on it the same way the other resource parameters are.
  */
-export class TypeSafe implements INodeType {
+export class Judgment implements INodeType {
 	description: INodeTypeDescription = {
-		displayName: 'TypeSafe',
-		name: 'typeSafe',
-		icon: { light: 'file:../../icons/typesafe.svg', dark: 'file:../../icons/typesafe.dark.svg' },
+		displayName: 'Judgment',
+		name: 'judgment',
+		icon: { light: 'file:../../icons/judgment.svg', dark: 'file:../../icons/judgment.dark.svg' },
 		group: ['transform'],
 		version: 1,
 		subtitle: '={{ $parameter["operation"] + ": " + $parameter["resource"] }}',
-		description: 'Make typed judgements about text or application state with TypeSafe System One models',
+		description:
+			'Make typed judgements about text or application state with System One models',
 		defaults: {
-			name: 'TypeSafe',
+			name: 'Judgment',
 		},
 		usableAsTool: true,
 		inputs: [NodeConnectionTypes.Main],
 		outputs: [NodeConnectionTypes.Main],
 		credentials: [
 			{
-				name: 'typeSafeApi',
+				name: 'judgmentApi',
 				required: true,
 			},
 		],
@@ -131,9 +132,9 @@ export class TypeSafe implements INodeType {
 					typeof this.getNode === 'function'
 						? this.getNode()
 						: {
-								id: 'typeSafe',
-								name: 'TypeSafe',
-								type: 'CUSTOM.typeSafe',
+								id: 'judgment',
+								name: 'Judgment',
+								type: 'CUSTOM.judgment',
 								typeVersion: 1,
 								position: [0, 0] as [number, number],
 								parameters: {},

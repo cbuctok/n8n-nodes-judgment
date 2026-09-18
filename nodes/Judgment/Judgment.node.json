@@ -1,5 +1,5 @@
 {
-	"node": "n8n-nodes-typesafe",
+	"node": "n8n-nodes-judgment",
 	"nodeVersion": "1.0",
 	"codexVersion": "1.0",
 	"categories": [
@@ -14,7 +14,7 @@
 		],
 		"primaryDocumentation": [
 			{
-				"url": "https://github.com/cbuctok/n8n-nodes-typesafe?tab=readme-ov-file"
+				"url": "https://github.com/cbuctok/n8n-nodes-judgment?tab=readme-ov-file"
 			}
 		]
 	}

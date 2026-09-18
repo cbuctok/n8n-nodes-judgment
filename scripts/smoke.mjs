@@ -1,5 +1,5 @@
 /**
- * Drives the built node against the real TypeSafe API using a fake n8n `this` context.
+ * Drives the built node against the real judgement API using a fake n8n `this` context.
  *
  * This is a development aid, not a test suite: the repo has no test runner, and this script exists
  * so the compiled node can be exercised end to end without launching n8n.
@@ -86,7 +86,7 @@ function makeContext(parameters, inputItems = [{ json: {} }]) {
 	};
 	return {
 		helpers,
-		getNode: () => ({ name: 'TypeSafe', type: 'n8n-nodes-typesafe.typeSafe', typeVersion: 1 }),
+		getNode: () => ({ name: 'Judgment', type: 'n8n-nodes-judgment.judgment', typeVersion: 1 }),
 		getInputData: () => inputItems,
 		getNodeParameter: get,
 		getCredentials: async () => ({ apiKey, baseUrl: 'https://api.typesafe.ai', defaultModel: 'jev-latest' }),
@@ -308,7 +308,7 @@ let failures = 0;
 // The three state input modes and the candidate modes resolve locally, so they are asserted
 // directly rather than sent to the API.
 {
-	const sf = await import(resolve(here, '../dist/nodes/TypeSafe/shared/stateFields.js'));
+	const sf = await import(resolve(here, '../dist/nodes/Judgment/shared/stateFields.js'));
 	const names = sf.stateParameterNames();
 	const make = (params) => ({ getNodeParameter: (n, i, f) => (params[n] === undefined ? f : params[n]) });
 	const checks = [
@@ -346,21 +346,21 @@ for (const testCase of cases) {
 	const resource = testCase.parameters.resource;
 	const execute =
 		resource === 'score'
-			? (await import(resolve(here, '../dist/nodes/TypeSafe/resources/score/index.js')))
+			? (await import(resolve(here, '../dist/nodes/Judgment/resources/score/index.js')))
 			: null;
 
 	try {
 		let out;
 		if (resource === 'evaluation') {
 			const mod = await import(
-				resolve(here, '../dist/nodes/TypeSafe/resources/evaluation/index.js')
+				resolve(here, '../dist/nodes/Judgment/resources/evaluation/index.js')
 			);
 			out = await mod.executeEvaluation.call(context, 0);
 		} else if (resource === 'noul') {
-			const mod = await import(resolve(here, '../dist/nodes/TypeSafe/resources/noul/index.js'));
+			const mod = await import(resolve(here, '../dist/nodes/Judgment/resources/noul/index.js'));
 			out = await mod.executeNoul.call(context, 0);
 		} else if (resource === 'choice') {
-			const mod = await import(resolve(here, '../dist/nodes/TypeSafe/resources/choice/index.js'));
+			const mod = await import(resolve(here, '../dist/nodes/Judgment/resources/choice/index.js'));
 			out = await mod.executeChoice.call(context, 0);
 		} else {
 			out = await execute.executeScore.call(context, 0);

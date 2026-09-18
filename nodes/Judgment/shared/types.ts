@@ -1,5 +1,8 @@
 /**
- * TypeSafe System One request and response shapes.
+ * Judgement provider request and response shapes.
+ *
+ * The wire format follows TypeSafe System One, the provider this node targets today. Supporting
+ * another provider means adding a transport, not rewriting the node.
  *
  * These are declared locally instead of imported from `@typesafe-ai/sdk` on purpose. n8n Cloud
  * does not accept community nodes that ship runtime dependencies, and the linter rejects any
@@ -10,10 +13,10 @@
  */
 
 /**
- * TypeSafe's public API root. Every entry point that talks to the API defaults to this and accepts
- * an override, so it is declared once here rather than repeated as a literal.
+ * Default API root. Every entry point that talks to the API defaults to this and accepts an
+ * override, so it is declared once here rather than repeated as a literal.
  */
-export const TYPESAFE_API_BASE_URL = 'https://api.typesafe.ai';
+export const DEFAULT_API_BASE_URL = 'https://api.typesafe.ai';
 
 /** A JSON-compatible value. */
 export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };

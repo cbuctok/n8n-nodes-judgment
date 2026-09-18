@@ -5,7 +5,7 @@ import { createTransport } from '../../shared/transport';
 import { buildStateFields, resolveState as resolveStateParameter, stateParameterNames } from '../../shared/stateFields';
 import { DEFAULT_THRESHOLD, resolveModel } from '../../shared/models';
 import { findUnparsedJson, getAnswer } from '../../shared/extract';
-import type { TypeSafeCredentials } from '../../shared/models';
+import type { JudgmentCredentials } from '../../shared/models';
 
 const showOnlyForNoul = {
 	resource: ['noul'],
@@ -142,7 +142,7 @@ export async function executeNoul(
 
 	const { questions } = buildQuestions(inputs);
 	const noulOptions = this.getNodeParameter('options', itemIndex, {}) as Record<string, unknown>;
-	const credentials = (await this.getCredentials('typeSafeApi')) as TypeSafeCredentials;
+	const credentials = (await this.getCredentials('judgmentApi')) as JudgmentCredentials;
 	const model = resolveModel(noulOptions, credentials);
 	const threshold =
 		typeof noulOptions.threshold === 'number' && Number.isFinite(noulOptions.threshold)

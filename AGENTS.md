@@ -1,10 +1,30 @@
-# n8n-nodes-typesafe
+# n8n-nodes-judgment
 
-An n8n community node package that wraps the [TypeSafe](https://typesafe.ai) System One API. Users
-build workflows that ask typed questions about text or application state and get back values they
-can branch on.
+An n8n community node package for typed judgements about text or application state. It asks Choice,
+Score and Noul questions and returns values they can branch on. It is deliberately vendor-neutral:
+the resources and input modes outlive any single provider, and the transport is the seam where a
+second one would be added. The wire format it speaks today is TypeSafe System One.
 
 Start with `README.md` for what the node does. This file covers how to work on it.
+
+## Names and identifiers
+
+Three names that must stay in step, because n8n resolves one from the other at load time:
+
+| Thing | Value | Where |
+| --- | --- | --- |
+| npm package | `@evgreg/n8n-nodes-judgment` | `package.json` → `name` |
+| Node | `judgment` (class `Judgment`) | `nodes/Judgment/Judgment.node.ts` |
+| Credential | `judgmentApi` (class `JudgmentApi`) | `credentials/JudgmentApi.credentials.ts` |
+
+The internal `name` fields are load-bearing: `n8n.nodes` / `n8n.credentials` in `package.json` point
+at compiled `dist/` paths, and the credential `name` is what workflows store in their saved
+`credentials` block. Renaming the credential type breaks every existing workflow that uses it, so
+treat `judgmentApi` as frozen once published.
+
+The package is **scoped**, which is why `package.json` carries
+`"publishConfig": { "access": "public" }`. Without it npm treats a scoped package as private and
+the release fails.
 
 ## Commands
 
@@ -74,9 +94,9 @@ touching the node.
 ## Architecture
 
 ```
-nodes/TypeSafe/
-  TypeSafe.node.ts            INodeType: resource switch, execute loop, error handling
-  TypeSafe.node.json          codex metadata
+nodes/Judgment/
+  Judgment.node.ts            INodeType: resource switch, execute loop, error handling
+  Judgment.node.json          codex metadata
   resources/
     evaluation/index.ts       Evaluate / Evaluate Many — the general-purpose path
     choice/index.ts           Decide / Rank
@@ -84,7 +104,7 @@ nodes/TypeSafe/
     score/description.ts      Score field definitions, kept separate to stay readable
     noul/index.ts             yes/no questions with a threshold
   shared/
-    types.ts                  TypeSafe v1 request/response shapes + API base URL, declared locally
+    types.ts                  Provider v1 request/response shapes + API base URL, declared locally
     questions.ts              UI values -> API question JSON, plus validation
     stateFields.ts            the Text / Fields / JSON input-mode block and its reader
     descriptions.ts           reusable INodeProperties for the question collection
@@ -93,26 +113,26 @@ nodes/TypeSafe/
     state.ts                  pack/unpack state for multi-item requests
     models.ts                 model resolution and credential defaults
     errors.ts                 errorNode(): builds the node descriptor error classes need
-credentials/TypeSafeApi.credentials.ts
-icons/typesafe{,.dark}.svg
+credentials/JudgmentApi.credentials.ts
+icons/judgment{,.dark}.svg
 scripts/
   smoke.mjs                   resources against the live API, no n8n
   check-node-fields.mjs       fixedCollection consistency check
   e2e-n8n.mjs                 the node through a real n8n over its REST API
-e2e/typesafe-e2e.workflow.json  importable workflow covering every operation
+e2e/judgment-e2e.workflow.json  importable workflow covering every operation
 docker-compose.yml            n8n for e2e, with the package linked in at startup
 dist/                         build output, gitignored, referenced by package.json
 ```
 
 Each resource module exports an `<resource>Description: INodeProperties[]` and an
-`execute<Resource>(this: IExecuteFunctions, itemIndex)`. `TypeSafe.node.ts` only routes between them
+`execute<Resource>(this: IExecuteFunctions, itemIndex)`. `Judgment.node.ts` only routes between them
 and owns the catch block.
 
 ### The node declares no runtime dependencies, on purpose
 
 `nodes/` and `credentials/` must not import third-party packages. `@n8n/community-nodes/no-restricted-imports`
 rejects it, because n8n Cloud refuses community nodes with dependencies. That is why
-`shared/types.ts` re-declares the TypeSafe request and response types instead of importing them from
+`shared/types.ts` re-declares the provider request and response types instead of importing them from
 `@typesafe-ai/sdk`.
 
 `@typesafe-ai/sdk` is a **devDependency used only as a type reference**. If you add a type there,
@@ -232,7 +252,7 @@ The remaining findings on a clean checkout are expected:
 | `qs`, `stream-json`, `uuid` | Inside the `@n8n/node-cli` dev toolchain. `qs` is graded dev-only by 0.16.1. |
 | `duplicate-block` ×2 | The two `levelCollection`/`node` **call sites** of factories that already removed the real duplication. |
 | `double-type-assertion` | `NodeApiError` requires `JsonObject`; an `Error` cannot satisfy it structurally. |
-| `hardcoded-url` | TypeSafe's public API root. It is a default that the credential's Base URL overrides. |
+| `hardcoded-url` | The provider's public API root. It is a default that the credential's Base URL overrides. |
 
 Do not reach for `npm audit fix` or `overrides` to silence the dependency rows — see the section
 above for what each one breaks.
@@ -294,10 +314,10 @@ These were all found by hitting real failures. Do not undo them.
   export default config;
   ```
 - **Icon paths resolve relative to the referencing source file.** Both the node and the credential
-  use `file:../../icons/typesafe.svg`. The linter checks these exist at lint time, so a wrong path is
+  use `file:../../icons/judgment.svg`. The linter checks these exist at lint time, so a wrong path is
   caught early, but only if the file genuinely exists on disk.
 - **`@n8n/community-nodes/require-node-api-error` forbids rethrowing a raw catch parameter**, but
-  allows `NodeApiError` and `NodeOperationError`. The catch block in `TypeSafe.node.ts` therefore
+  allows `NodeApiError` and `NodeOperationError`. The catch block in `Judgment.node.ts` therefore
   only wraps and throws; it has no early rethrow of its own errors.
 - **The credential test hits `GET /v1/models`**, which exists and returns `{"models":[...]}`. It is
   the cheapest endpoint that proves both the key and the base URL.
@@ -316,7 +336,8 @@ These were all found by hitting real failures. Do not undo them.
 
 ## Working on this node
 
-- Read the TypeSafe docs before changing question handling. The authoritative pages are
+- Read the TypeSafe docs before changing question handling, since the wire format is theirs. The
+  authoritative pages are
   `https://docs.typesafe.ai/api`, `/primitives`, `/primitives/advanced`, and `/confidence`.
   `https://docs.typesafe.ai/llms.txt` is the index; append `.md` to any page path for Markdown.
 - Keep questions and thresholds easy to find. When adding a decision, put the question text and any

@@ -7,7 +7,7 @@ import type {
 import { NodeOperationError } from 'n8n-workflow';
 
 import type { EntryType, Question } from '../../shared/types';
-import type { TypeSafeCredentials } from '../../shared/models';
+import type { JudgmentCredentials } from '../../shared/models';
 
 import {
 	asEntryType,
@@ -220,7 +220,7 @@ async function requestAnswers(
 
 	const state = resolveState.call(this, itemIndex, many);
 	const evaluationOptions = this.getNodeParameter('options', itemIndex, {}) as Record<string, unknown>;
-	const credentials = (await this.getCredentials('typeSafeApi')) as TypeSafeCredentials;
+	const credentials = (await this.getCredentials('judgmentApi')) as JudgmentCredentials;
 	const model = resolveModel(evaluationOptions, credentials);
 
 	const transport = createTransport({ executeContext: this, baseUrl: credentials.baseUrl });

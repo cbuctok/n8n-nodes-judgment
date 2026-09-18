@@ -1,15 +1,15 @@
 {
-	"name": "n8n-nodes-typesafe",
+	"name": "@evgreg/n8n-nodes-judgment",
 	"version": "0.1.0",
-	"description": "n8n node for TypeSafe System One models: ask typed Choice, Score, and Noul questions about text or application state and get answers your workflow can branch on.",
+	"description": "Make typed judgements about text or application state: ask Choice, Score, and Noul questions and branch on the answers.",
 	"license": "MIT",
-	"homepage": "https://github.com/cbuctok/n8n-nodes-typesafe",
+	"homepage": "https://github.com/cbuctok/n8n-nodes-judgment",
 	"keywords": [
 		"n8n-community-node-package",
-		"typesafe",
+		"judgment",
 		"ai",
 		"classification",
-		"judgement",
+		"llm",
 		"routing"
 	],
 	"author": {
@@ -18,7 +18,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/cbuctok/n8n-nodes-typesafe.git"
+		"url": "git+https://github.com/cbuctok/n8n-nodes-judgment.git"
 	},
 	"scripts": {
 		"build": "n8n-node build",
@@ -39,14 +39,17 @@
 	"files": [
 		"dist"
 	],
+	"publishConfig": {
+		"access": "public"
+	},
 	"n8n": {
 		"n8nNodesApiVersion": 1,
 		"strict": true,
 		"credentials": [
-			"dist/credentials/TypeSafeApi.credentials.js"
+			"dist/credentials/JudgmentApi.credentials.js"
 		],
 		"nodes": [
-			"dist/nodes/TypeSafe/TypeSafe.node.js"
+			"dist/nodes/Judgment/Judgment.node.js"
 		]
 	},
 	"devDependencies": {

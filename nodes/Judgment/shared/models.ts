@@ -7,7 +7,7 @@ export const DEFAULT_MODEL = 'jev-latest';
 export const DEFAULT_THRESHOLD = 0.5;
 
 /** The credential fields this node reads. */
-export interface TypeSafeCredentials extends IDataObject {
+export interface JudgmentCredentials extends IDataObject {
 	apiKey?: string;
 	baseUrl?: string;
 	defaultModel?: string;
@@ -21,7 +21,7 @@ export interface TypeSafeCredentials extends IDataObject {
  */
 export function resolveModel(
 	nodeOptions: Record<string, unknown>,
-	credentials: TypeSafeCredentials,
+	credentials: JudgmentCredentials,
 ): string {
 	const nodeModel = nodeOptions.model;
 	if (typeof nodeModel === 'string' && nodeModel.trim() !== '') {

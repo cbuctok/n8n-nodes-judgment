@@ -11,7 +11,7 @@ import { createTransport } from '../../shared/transport';
 import { buildStateFields, resolveState as resolveStateParameter, stateParameterNames } from '../../shared/stateFields';
 import { readBooleanOption, resolveModel } from '../../shared/models';
 import { findUnparsedJson, getAnswer, getAnswerChoice, getAnswerConfidence } from '../../shared/extract';
-import type { TypeSafeCredentials } from '../../shared/models';
+import type { JudgmentCredentials } from '../../shared/models';
 
 const showOnlyForChoice = {
 	resource: ['choice'],
@@ -306,7 +306,7 @@ async function rankByProbability(
 	const questionId = input.id;
 	const { questions } = buildQuestions([input]);
 	const choiceOptions = this.getNodeParameter('options', itemIndex, {}) as Record<string, unknown>;
-	const credentials = (await this.getCredentials('typeSafeApi')) as TypeSafeCredentials;
+	const credentials = (await this.getCredentials('judgmentApi')) as JudgmentCredentials;
 	const model = resolveModel(choiceOptions, credentials);
 
 	const transport = createTransport({ executeContext: this, baseUrl: credentials.baseUrl });

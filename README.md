@@ -1,12 +1,17 @@
-# n8n-nodes-typesafe
+# n8n-nodes-judgment
 
-This is an n8n community node. It lets you use [TypeSafe](https://typesafe.ai) System One models in
-your n8n workflows.
+This is an n8n community node for typed judgements about text or application state. It asks Choice,
+Score and Noul questions and returns values your workflow can branch on: a selected option, a
+position on a scale, or a probability.
 
-TypeSafe's [System One models](https://docs.typesafe.ai/concepts/system-one) do not write text. They
-answer typed questions about your data and return values your workflow can branch on: a selected
-option, a position on a scale, or a probability. The node wraps the
+It is not tied to a single vendor. The abstraction — question kinds, thresholds and confidence — is
+the point; the transport speaks [TypeSafe](https://typesafe.ai)'s
+[System One](https://docs.typesafe.ai/concepts/system-one) API today because that is what it was
+built against. Adding another provider means adding a transport, not rewriting the node. System One
+models do not write text; they answer typed questions about your data, over the
 [`POST /v1/systemone`](https://docs.typesafe.ai/api) endpoint.
+
+The node name is **Judgment**; the credential is **Judgment API**.
 
 [n8n](https://n8n.io/) is a [fair-code licensed](https://docs.n8n.io/reference/license/) workflow automation platform.
 
@@ -46,12 +51,13 @@ derived from a threshold you set.
 
 ## Credentials
 
-You need a TypeSafe API key, created in the [TypeSafe console](https://console.typesafe.ai/keys).
+You need an API key, created in the provider console. For TypeSafe that is the
+[TypeSafe console](https://console.typesafe.ai/keys).
 
 | Field | Required | Notes |
 | --- | --- | --- |
 | API Key | Yes | Stored as a password field and sent as a bearer token. |
-| Base URL | No | Defaults to `https://api.typesafe.ai`. Change it only for a proxy or self-hosted endpoint. |
+| Base URL | No | Defaults to the provider's public API root (`https://api.typesafe.ai` today). Change it for a proxy, a self-hosted endpoint, or another provider. |
 | Default Model | No | Used when an operation does not override the model. Defaults to `jev-latest`. |
 
 The credential test calls `GET /v1/models`, so a bad key or an unreachable base URL is reported when
@@ -60,7 +66,9 @@ the credential is saved rather than on the first workflow run.
 ## Compatibility
 
 - Requires n8n running on Node.js 20 or newer.
-- Built and verified against the TypeSafe v1 API (`POST /v1/systemone`).
+- Built and verified against the TypeSafe v1 API (`POST /v1/systemone`). The node's resources,
+  input modes and confidence handling are transport-independent; the HTTP layer is what would be
+  swapped for a different provider.
 
 ## Usage
 

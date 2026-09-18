@@ -14,9 +14,9 @@ export function errorNode(context: { getNode?: () => unknown }): INode {
 		return getNode.call(context) as INode;
 	}
 	return {
-		id: 'typeSafe',
-		name: 'TypeSafe',
-		type: 'CUSTOM.typeSafe',
+		id: 'judgment',
+		name: 'Judgment',
+		type: 'CUSTOM.judgment',
 		typeVersion: 1,
 		position: [0, 0],
 		parameters: {},

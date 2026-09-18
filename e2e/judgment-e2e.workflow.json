@@ -1,5 +1,5 @@
 {
-  "name": "TypeSafe — End to End",
+  "name": "Judgment — End to End",
   "nodes": [
     {
       "parameters": {},
@@ -137,16 +137,16 @@
       },
       "id": "ts-03-evaluate",
       "name": "1. Evaluate — mixed questions",
-      "type": "CUSTOM.typeSafe",
+      "type": "CUSTOM.judgment",
       "typeVersion": 1,
       "position": [
         -620,
         -480
       ],
       "credentials": {
-        "typeSafeApi": {
+        "judgmentApi": {
           "id": "",
-          "name": "TypeSafe account"
+          "name": "Judgment account"
         }
       },
       "notes": "Expect 4 items: urgency + policy_supports as probabilities, department as a choice with confidence, frustration as a score with a legend."
@@ -178,16 +178,16 @@
       },
       "id": "ts-04-noul",
       "name": "2. Noul — threshold",
-      "type": "CUSTOM.typeSafe",
+      "type": "CUSTOM.judgment",
       "typeVersion": 1,
       "position": [
         -400,
         -480
       ],
       "credentials": {
-        "typeSafeApi": {
+        "judgmentApi": {
           "id": "",
-          "name": "TypeSafe account"
+          "name": "Judgment account"
         }
       },
       "notes": "Expect two items, each with probability and a boolean derived from the 0.7 threshold."
@@ -219,16 +219,16 @@
       },
       "id": "ts-05-choice-decide",
       "name": "3. Choice Decide — JSON state",
-      "type": "CUSTOM.typeSafe",
+      "type": "CUSTOM.judgment",
       "typeVersion": 1,
       "position": [
         -180,
         -480
       ],
       "credentials": {
-        "typeSafeApi": {
+        "judgmentApi": {
           "id": "",
-          "name": "TypeSafe account"
+          "name": "Judgment account"
         }
       },
       "notes": "Expect one item containing the ranked options with the selected one marked."
@@ -261,16 +261,16 @@
       },
       "id": "ts-06-choice-rank",
       "name": "4. Choice Rank — candidates as rows",
-      "type": "CUSTOM.typeSafe",
+      "type": "CUSTOM.judgment",
       "typeVersion": 1,
       "position": [
         40,
         -480
       ],
       "credentials": {
-        "typeSafeApi": {
+        "judgmentApi": {
           "id": "",
-          "name": "TypeSafe account"
+          "name": "Judgment account"
         }
       },
       "notes": "Expect candidates ordered by probability with the top match first."
@@ -323,16 +323,16 @@
       },
       "id": "ts-08-rate",
       "name": "5. Score Rate",
-      "type": "CUSTOM.typeSafe",
+      "type": "CUSTOM.judgment",
       "typeVersion": 1,
       "position": [
         -620,
         -40
       ],
       "credentials": {
-        "typeSafeApi": {
+        "judgmentApi": {
           "id": "",
-          "name": "TypeSafe account"
+          "name": "Judgment account"
         }
       },
       "notes": "Expect one item carrying the dimensions array with score, normalized value and legend."
@@ -409,16 +409,16 @@
       },
       "id": "ts-09-composite-shared",
       "name": "6. Composite — shared levels",
-      "type": "CUSTOM.typeSafe",
+      "type": "CUSTOM.judgment",
       "typeVersion": 1,
       "position": [
         -400,
         -40
       ],
       "credentials": {
-        "typeSafeApi": {
+        "judgmentApi": {
           "id": "",
-          "name": "TypeSafe account"
+          "name": "Judgment account"
         }
       },
       "notes": "Both dimensions reuse the Low/Medium/High shared scale, weighted 3:1. Expect a combinedScore."
@@ -472,16 +472,16 @@
       },
       "id": "ts-10-composite-own",
       "name": "7. Composite — own levels, equal weights",
-      "type": "CUSTOM.typeSafe",
+      "type": "CUSTOM.judgment",
       "typeVersion": 1,
       "position": [
         -180,
         -40
       ],
       "credentials": {
-        "typeSafeApi": {
+        "judgmentApi": {
           "id": "",
-          "name": "TypeSafe account"
+          "name": "Judgment account"
         }
       },
       "notes": "Each dimension defines its own levels, and equal weights make combinedScore a plain average of the normalized values."
@@ -500,16 +500,16 @@
       },
       "id": "ts-11-composite-json",
       "name": "8. Composite — JSON dimensions",
-      "type": "CUSTOM.typeSafe",
+      "type": "CUSTOM.judgment",
       "typeVersion": 1,
       "position": [
         40,
         -40
       ],
       "credentials": {
-        "typeSafeApi": {
+        "judgmentApi": {
           "id": "",
-          "name": "TypeSafe account"
+          "name": "Judgment account"
         }
       },
       "notes": "Dimensions and weights both come from JSON, which is the shape to use when they are generated upstream."
@@ -572,16 +572,16 @@
       },
       "id": "ts-13-many",
       "name": "9. Evaluate Many — one call for all items",
-      "type": "CUSTOM.typeSafe",
+      "type": "CUSTOM.judgment",
       "typeVersion": 1,
       "position": [
         -620,
         400
       ],
       "credentials": {
-        "typeSafeApi": {
+        "judgmentApi": {
           "id": "",
-          "name": "TypeSafe account"
+          "name": "Judgment account"
         }
       },
       "notes": "All three items go out in ONE API call. Expect 6 items back, each tagged with itemIndex."
@@ -589,7 +589,7 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "You classify support messages. Use the TypeSafe tool to decide which team should handle the message, then reply with the chosen team and its confidence.",
+        "text": "You classify support messages. Use the Judgment tool to decide which team should handle the message, then reply with the chosen team and its confidence.",
         "options": {}
       },
       "id": "ts-14-agent",
@@ -600,7 +600,7 @@
         -400,
         400
       ],
-      "notes": "ATTACH A CHAT MODEL to the model input before running. This exercises the generated TypeSafe Tool node."
+      "notes": "ATTACH A CHAT MODEL to the model input before running. This exercises the generated Judgment Tool node."
     },
     {
       "parameters": {
@@ -630,17 +630,17 @@
         "options": {}
       },
       "id": "ts-15-tool",
-      "name": "10a. TypeSafe Tool",
-      "type": "CUSTOM.typeSafeTool",
+      "name": "10a. Judgment Tool",
+      "type": "CUSTOM.judgmentTool",
       "typeVersion": 1,
       "position": [
         -620,
         620
       ],
       "credentials": {
-        "typeSafeApi": {
+        "judgmentApi": {
           "id": "",
-          "name": "TypeSafe account"
+          "name": "Judgment account"
         }
       },
       "notes": "Auto-generated from usableAsTool. Connected to the agent through the ai_tool connection."
@@ -754,7 +754,7 @@
         ]
       ]
     },
-    "10a. TypeSafe Tool": {
+    "10a. Judgment Tool": {
       "ai_tool": [
         [
           {

@@ -148,7 +148,7 @@ export function readOptionsParameter(
 
 /**
  * Builds the `questions` map for one question. Each generated key is `<id>_<type>` because the
- * TypeSafe API stores question ids and answer ids in separate namespaces, so `urgency_choice` and
+ * The API stores question ids and answer ids in separate namespaces, so `urgency_choice` and
  * `urgency_noul` can coexist without colliding, while the node still shows a single `id` per row.
  */
 function buildNoul(id: string, key: string, input: QuestionInput): GeneratedQuestion {

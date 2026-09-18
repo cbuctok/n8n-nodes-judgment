@@ -7,7 +7,7 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 /**
- * TypeSafe returns an answer object for every question it was asked, so an id missing from
+ * The provider returns an answer object for every question it was asked, so an id missing from
  * `answers` means the response was not shaped the way the node expects. Returning null keeps that
  * case explicit instead of handing back an empty object that looks like a real answer.
  */

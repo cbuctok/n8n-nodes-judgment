@@ -80,17 +80,17 @@ async function authenticate() {
 const cookie = await authenticate();
 console.log('authenticated');
 
-// --- Ensure the TypeSafe credential exists -------------------------------------------------
+// --- Ensure the Judgment credential exists -------------------------------------------------
 const creds = await req('/rest/credentials', { cookie });
-let credentialId = (creds.data.data ?? []).find((c) => c.type === 'typeSafeApi')?.id;
+let credentialId = (creds.data.data ?? []).find((c) => c.type === 'judgmentApi')?.id;
 
 if (!credentialId) {
 	const created = await req('/rest/credentials', {
 		method: 'POST',
 		cookie,
 		body: {
-			name: 'TypeSafe API',
-			type: 'typeSafeApi',
+			name: 'Judgment API',
+			type: 'judgmentApi',
 			data: { apiKey, baseUrl: 'https://api.typesafe.ai', defaultModel: 'jev-latest' },
 		},
 	});
@@ -110,14 +110,14 @@ const TICKET = {
 		'Fixed the null check in the payment handler. Also refactored the retry loop while I was in there.',
 };
 
-const cred = { typeSafeApi: { id: credentialId, name: 'TypeSafe API' } };
+const cred = { judgmentApi: { id: credentialId, name: 'Judgment API' } };
 
 /** `options` is present on every operation, so it is applied here rather than repeated. */
 const node = (name, params, pos) => ({
 	parameters: { options: {}, ...params },
 	id: `n-${name.replace(/\W+/g, '-').toLowerCase()}`,
 	name,
-	type: 'CUSTOM.typeSafe',
+	type: 'CUSTOM.judgment',
 	typeVersion: 1,
 	position: pos,
 	credentials: cred,
@@ -286,7 +286,7 @@ const nodes = [
 ];
 
 const workflow = {
-	name: 'TypeSafe E2E',
+	name: 'Judgment E2E',
 	nodes,
 	connections: Object.fromEntries(
 		nodes.slice(0, -1).map((n, i) => [

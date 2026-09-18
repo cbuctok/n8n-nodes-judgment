@@ -19,7 +19,7 @@ services:
   # entrypoint untouched.
   setup:
     image: docker.n8n.io/n8nio/n8n:2.39.6
-    container_name: n8n-typesafe-setup
+    container_name: n8n-judgment-setup
     restart: 'no'
     user: root
     entrypoint:
@@ -29,16 +29,16 @@ services:
         set -e
         custom=/home/node/.n8n/custom
         mkdir -p "$$custom/node_modules"
-        ln -sfn /package "$$custom/node_modules/n8n-nodes-typesafe"
+        ln -sfn /package "$$custom/node_modules/n8n-nodes-judgment"
         chown -R node:node "$$custom"
-        echo "linked /package -> $$custom/node_modules/n8n-nodes-typesafe"
+        echo "linked /package -> $$custom/node_modules/n8n-nodes-judgment"
     volumes:
       - n8n_data:/home/node/.n8n
       - ./:/package:ro
 
   n8n:
     image: docker.n8n.io/n8nio/n8n:2.39.6
-    container_name: n8n-typesafe-dev
+    container_name: n8n-judgment-dev
     restart: unless-stopped
     depends_on:
       setup:

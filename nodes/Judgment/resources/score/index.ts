@@ -7,7 +7,7 @@ import { createTransport } from '../../shared/transport';
 import { resolveState as resolveStateParameter, stateParameterNames } from '../../shared/stateFields';
 import { resolveModel } from '../../shared/models';
 import { findUnparsedJson, getAnswer, getAnswerConfidence, getAnswerValue } from '../../shared/extract';
-import type { TypeSafeCredentials } from '../../shared/models';
+import type { JudgmentCredentials } from '../../shared/models';
 import { errorNode } from '../../shared/errors';
 
 import { scoreDescription } from './description';
@@ -226,7 +226,7 @@ async function runQuestions(
 ): Promise<INodeExecutionData[]> {
 	const { questions } = buildQuestions(inputs);
 	const scoreOptions = this.getNodeParameter('options', itemIndex, {}) as Record<string, unknown>;
-	const credentials = (await this.getCredentials('typeSafeApi')) as TypeSafeCredentials;
+	const credentials = (await this.getCredentials('judgmentApi')) as JudgmentCredentials;
 	const model = resolveModel(scoreOptions, credentials);
 
 	const transport = createTransport({ executeContext: this, baseUrl: credentials.baseUrl });
