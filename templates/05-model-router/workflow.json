@@ -1,0 +1,697 @@
+{
+  "name": "Route support tickets to a small or large model by difficulty with Judgment",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Manual Test Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1440,
+        288
+      ],
+      "notes": "Run this workflow to see the same routing logic applied to five tickets."
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "tickets",
+              "name": "tickets",
+              "type": "array",
+              "value": "[{\"ticketId\": \"T-1001\", \"ticket\": \"How do I change the email address on my account? I looked in settings but cannot find it.\"}, {\"ticketId\": \"T-1002\", \"ticket\": \"What are your support hours?\"}, {\"ticketId\": \"T-1003\", \"ticket\": \"Our nightly batch job that syncs inventory to our warehouse has started failing halfway through with a deadlock error. It worked until Tuesday. We are on the growth plan and this is blocking fulfilment.\"}, {\"ticketId\": \"T-1004\", \"ticket\": \"I was charged twice for order A-104 and I want a refund.\"}, {\"ticketId\": \"T-1005\", \"ticket\": \"Can you explain why the ledger service reconciles a 3-way match differently when a credit note lands in the same period as the original invoice? Our auditors flagged it and I need to know whether the accrual reversal is correct or whether we should restate.\"}]"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Five Tickets",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1216,
+        288
+      ],
+      "notes": "A batch of five tickets in one field. Replace with your inbox, helpdesk, or a webhook."
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "tickets",
+        "options": {}
+      },
+      "name": "One Item Per Ticket",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -992,
+        288
+      ],
+      "notes": "Turns the array into five items. The classifier then runs once per ticket."
+    },
+    {
+      "parameters": {
+        "resource": "evaluation",
+        "operation": "evaluate",
+        "state": "fields",
+        "stateFields": {
+          "field": [
+            {
+              "fieldName": "ticket",
+              "fieldValue": "={{ $json.ticket }}"
+            }
+          ]
+        },
+        "questions": {
+          "question": [
+            {
+              "id": "={{ $json.ticketId }}_intent",
+              "questionType": "choice",
+              "questionInstructions": "What is the primary intent of `ticket`?",
+              "choiceOptions": {
+                "entry": [
+                  {
+                    "option": "how_to",
+                    "optionDescription": "Asking how to do something, or where to find a setting"
+                  },
+                  {
+                    "option": "billing",
+                    "optionDescription": "About a charge, invoice, refund or subscription"
+                  },
+                  {
+                    "option": "incident",
+                    "optionDescription": "Something is broken, failing or blocking work"
+                  },
+                  {
+                    "option": "other",
+                    "optionDescription": "Anything that does not fit the above"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "={{ $json.ticketId }}_needs_expert",
+              "questionType": "noul",
+              "questionInstructions": "Does answering `ticket` require reasoning beyond routine procedure: diagnosing a cause, reconciling competing explanations, or advising on a specific case?",
+              "trueDescription": "the answer needs diagnosis or case-specific reasoning",
+              "falseDescription": "the answer follows from routine procedure or a documented policy"
+            },
+            {
+              "id": "={{ $json.ticketId }}_has_policy_answer",
+              "questionType": "noul",
+              "questionInstructions": "Is `ticket` answerable with a short, factual answer that is standard for this product?",
+              "trueDescription": "the answer is a fixed fact such as a setting location or a policy figure",
+              "falseDescription": "the answer needs case-specific detail"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Classify Tickets",
+      "type": "n8n-nodes-judgment.judgment",
+      "typeVersion": 1,
+      "position": [
+        -768,
+        288
+      ],
+      "credentials": {
+        "judgmentApi": {
+          "id": "",
+          "name": "Judgment API"
+        }
+      },
+      "notes": "Runs once per ticket, and all three questions go out in ONE API call for that ticket. Each question id carries the ticket id, so every answer identifies the ticket it came from."
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "r-hitl",
+                    "leftValue": "={{ $json.intentConfidence }}",
+                    "rightValue": 0.6,
+                    "operator": {
+                      "type": "number",
+                      "operation": "lt"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Send to Human"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "r-policy",
+                    "leftValue": "={{ $json.hasPolicyAnswer }}",
+                    "rightValue": 0.5,
+                    "operator": {
+                      "type": "number",
+                      "operation": "gte"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Answer From Policy"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "r-small",
+                    "leftValue": "={{ $json.needsExpert }}",
+                    "rightValue": 0.5,
+                    "operator": {
+                      "type": "number",
+                      "operation": "lt"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Small Model"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "Large Model"
+        }
+      },
+      "name": "Route by Difficulty",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        352,
+        256
+      ],
+      "notes": "Four destinations. Output 1 is a person, for tickets the classifier could not make sense of. The 0.5 and 0.6 thresholds live here, so changing them needs no new inference."
+    },
+    {
+      "parameters": {},
+      "name": "Answer From Policy",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        576,
+        192
+      ],
+      "notes": "No model call at all. Attach your knowledge base lookup or a canned reply here."
+    },
+    {
+      "parameters": {},
+      "name": "Small Model",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        576,
+        384
+      ],
+      "notes": "Attach a small, cheap chat model here. Routine tickets arrive on this branch: most of your traffic."
+    },
+    {
+      "parameters": {},
+      "name": "Large Model",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        576,
+        576
+      ],
+      "notes": "Attach a larger reasoning model here. Only tickets the classifier flagged as needing reasoning arrive."
+    },
+    {
+      "parameters": {},
+      "name": "Send to Human",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        576,
+        0
+      ],
+      "notes": "The classifier was unsure what this ticket even is. Route it to a person rather than paying a model to guess."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "f",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "_intent_choice",
+              "operator": {
+                "type": "string",
+                "operation": "endsWith"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Keep Intent Answers",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        -544,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "f",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "_needs_expert_noul",
+              "operator": {
+                "type": "string",
+                "operation": "endsWith"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Keep Expert Answers",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        -544,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "f",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "_has_policy_answer_noul",
+              "operator": {
+                "type": "string",
+                "operation": "endsWith"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Keep Policy Answers",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        -544,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "intent",
+              "value": "={{ $json.choice }}",
+              "type": "string"
+            },
+            {
+              "id": "2",
+              "name": "intentConfidence",
+              "value": "={{ $json.confidence }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Name Intent Answers",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -320,
+        96
+      ],
+      "notes": "Takes the chosen label and its confidence from the choice answer."
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "needsExpert",
+              "value": "={{ $json.value }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Name Expert Answers",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -320,
+        288
+      ],
+      "notes": "Takes the probability from the yes/no answer."
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "hasPolicyAnswer",
+              "value": "={{ $json.value }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Name Policy Answers",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -320,
+        480
+      ],
+      "notes": "Takes the probability from the yes/no answer."
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "numberInputs": 3,
+        "options": {}
+      },
+      "name": "Zip Answers Per Ticket",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -96,
+        272
+      ],
+      "notes": "Zips the three answer streams by position, giving one item per ticket with all three values."
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": true,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "t",
+              "name": "ticket",
+              "value": "={{ $('One Item Per Ticket').all()[$position].json.ticket }}",
+              "type": "string"
+            },
+            {
+              "id": "i",
+              "name": "ticketId",
+              "value": "={{ $('One Item Per Ticket').all()[$position].json.ticketId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Attach Ticket",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        128,
+        288
+      ],
+      "notes": "Adds the ticket text and id back, since the zip carries only the answers."
+    },
+    {
+      "parameters": {
+        "content": "## Route support tickets to a small or large model by difficulty with Judgment\n\n### How it works\n\n1. Holds five support tickets in one field, then splits them into one item per ticket.\n2. Classifies each ticket in a single judgment call that answers three questions: the intent, whether it needs reasoning beyond routine procedure, and whether a short standard answer exists. Each question id carries the ticket id, so every answer says which ticket it belongs to.\n3. Sorts the answers by question, then zips the three lists into one item per ticket.\n4. Splits the tickets four ways: to a person when the classifier could not make sense of the ticket, to a canned answer when one exists, to a small model for routine work, and to a large model for the rest.\n\n### Setup steps\n\n- [ ] Install `n8n-nodes-judgment` from **Settings \u2192 Community Nodes**.\n- [ ] Add your **Judgment API** credential to the *Classify Tickets* node, and set the Base URL if you are not using the default provider.\n- [ ] Replace *Five Tickets* with your own source, keeping a `ticketId` and `ticket` field per entry. A helpdesk or webhook node fits here.\n- [ ] Attach a small chat model to *Small Model* and a larger one to *Large Model*, or replace both with your own handler.\n- [ ] Review the thresholds in *Route by Difficulty*: 0.6 for intent confidence, 0.5 for the other two.\n\n### Customization\n\nThe thresholds live in *Route by Difficulty*, not in the model, so re-tuning them re-routes the same tickets with no new inference. Tune the human branch first: raising the confidence gate sends more tickets to a person, which is the safe direction for anything customer-facing.",
+        "width": 480,
+        "height": 888
+      },
+      "name": "How This Works",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -2032,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Install the community node first\n\n**Settings \u2192 Community Nodes \u2192 Install \u2192** `n8n-nodes-judgment`, then add your API key on the **Judgment API** credential. Self-hosted only: community nodes cannot run on n8n Cloud.",
+        "width": 480,
+        "height": 200,
+        "color": 7
+      },
+      "name": "Install Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -2032,
+        920
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Test Trigger": {
+      "main": [
+        [
+          {
+            "node": "Five Tickets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Five Tickets": {
+      "main": [
+        [
+          {
+            "node": "One Item Per Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "One Item Per Ticket": {
+      "main": [
+        [
+          {
+            "node": "Classify Tickets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify Tickets": {
+      "main": [
+        [
+          {
+            "node": "Keep Intent Answers",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Keep Expert Answers",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Keep Policy Answers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keep Intent Answers": {
+      "main": [
+        [
+          {
+            "node": "Name Intent Answers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keep Expert Answers": {
+      "main": [
+        [
+          {
+            "node": "Name Expert Answers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keep Policy Answers": {
+      "main": [
+        [
+          {
+            "node": "Name Policy Answers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Name Intent Answers": {
+      "main": [
+        [
+          {
+            "node": "Zip Answers Per Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Name Expert Answers": {
+      "main": [
+        [
+          {
+            "node": "Zip Answers Per Ticket",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Name Policy Answers": {
+      "main": [
+        [
+          {
+            "node": "Zip Answers Per Ticket",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Zip Answers Per Ticket": {
+      "main": [
+        [
+          {
+            "node": "Attach Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Attach Ticket": {
+      "main": [
+        [
+          {
+            "node": "Route by Difficulty",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Difficulty": {
+      "main": [
+        [
+          {
+            "node": "Send to Human",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Answer From Policy",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Small Model",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Large Model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}
