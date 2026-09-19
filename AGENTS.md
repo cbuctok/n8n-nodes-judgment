@@ -289,6 +289,11 @@ These were all found by hitting real failures. Do not undo them.
   `{"type":"missing","loc":["body","model"]}`, and an empty string returns `400 Unknown model:`.
   Always send a model. `resolveModel()` in `shared/models.ts` falls back node option → credential →
   `jev-latest` and must never return an empty string.
+- **A question id can carry an expression, and that is the reliable way to tag answers per item.**
+  Setting a question id to `={{ $json.ticketId }}_intent` makes the API return
+  `T-1001_intent_choice`, so answers identify their input item without the caller relying on the
+  order they arrive in. The leading `=` is required: a bare `{{ $json.ticketId }}_intent` is passed
+  through as a literal string, and every answer then shares one id. Verified against a live instance.
 - **Answer ids are `"<id>_<type>"`, not the bare id.** The API keeps question ids and answer ids in
   separate namespaces, and both descriptions hold keys with the suffix. This lets `urgency_noul` and
   `urgency_choice` coexist while the UI shows one `id` column. So `buildQuestions()` returns prefixed
@@ -298,6 +303,17 @@ These were all found by hitting real failures. Do not undo them.
   used a nested `ownLevel` collection for per-dimension scales and it was silently `{}` at runtime;
   the levels are a newline-separated string field instead. This is the bug that hid behind a
   `return []` guard for several iterations.
+- **A request returns one answer per question about one state, so items cannot be batched.**
+  `Evaluate Many` used to pack every input item into a single state and claim to "split the answers
+  back out per item". It cannot: the provider returns one answer per question for the whole state,
+  and `unpackAnswers` then handed that single answer to every item, so a batch of five produced
+  five identical answers. The operation has been removed. `Evaluate` runs once per item, which is
+  n8n's own loop and the only shape that yields a correct answer per item. Do not reintroduce
+  cross-item batching without confirming the provider returns per-item answers.
+- **A node reporting "ok" is not proof it ran for every item.** n8n logs once per node, not per
+  item, so a branch taking one ticket out of five is indistinguishable in the log from one taking
+  all five. `scripts/smoke.mjs` calls `execute(..., 0)` only, which is why the batching bug above
+  survived. Assert the emitted item count, and for per-branch behaviour read the values.
 - **Never return an empty array to signal bad input.** A node returning `[]` ends its branch with no
   error, so the workflow reports success while every later node is skipped. `executeScore` did this
   when it read no dimensions, and the only symptom was a later node never running. Throw a
@@ -352,6 +368,17 @@ These were all found by hitting real failures. Do not undo them.
   is an n8n bug and not something to chase here. Real execution is unaffected: the `e2e` run
   authenticates and completes. **Do not use that endpoint to decide whether the credential works** —
   rely on `npm run e2e`.
+- **A template imports with an install prompt on a custom-mount dev instance, and that is correct.**
+  Templates ship `n8n-nodes-judgment.judgment`, the identifier a user gets from **Settings →
+  Community Nodes**, which is the documented install route. `docker-compose.yml` instead mounts this
+  repo into `~/.n8n/custom`, where `CustomDirectoryLoader` registers everything under `CUSTOM.`, so a
+  manual import shows "This node is not currently installed". Do not "fix" the template by switching
+  it to `CUSTOM.judgment`: that would break it for every real user. Use
+  `KEEP_WORKFLOW=1 node scripts/verify-template.mjs <template>` to import a working copy for
+  inspection, since the harness rewrites the type and normally deletes what it created.
+- **`scripts/verify-template.mjs` deletes the workflow it creates unless `KEEP_WORKFLOW=1` is set.**
+  Before that it accumulated one workflow per run, so the editor filled with near-identical copies
+  and a debug probe was mistaken for the template under test more than once.
 - **CI runs on `main`, the default branch is `master`.** A push to `master` does not trigger
   `.github/workflows/ci.yml`; pull requests do. `publish.yml` triggers on tags matching `*.*.*`.
 - **`npm install` needs `--force --ignore-scripts` on this machine.** `@n8n/node-cli@0.33.1` pins
