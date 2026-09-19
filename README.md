@@ -35,9 +35,7 @@ The node is organised as **Resource → Operation**.
 ### Evaluation
 
 - **Evaluate** — ask several questions of different types about one piece of state and get one
-  output item per question. This is the operation to reach for first.
-- **Evaluate Many** — ask the same questions about every incoming item. All items are packed into a
-  single state and sent in **one** API call; answers are split back out per item.
+  output item per question, per input item. This is the operation to reach for first.
 
 ### Choice
 
@@ -170,9 +168,14 @@ Every item also carries `usage` (token counts), `model`, `requestId` and the raw
 
 ### Cost and latency
 
-One node run makes at most one API call per input item, regardless of how many questions it asks.
-Use **Evaluation → Evaluate Many** when every item needs the same questions, since that packs all
-items into a single call.
+One node run makes exactly one API call per input item, regardless of how many questions it asks.
+That is what makes asking a question you might not need close to free: questions in one request run
+in parallel and cost only their own tokens.
+
+There is no batching across items, and this is deliberate. A request carries one state, and every
+question in it returns one answer about that state, so a request covering several items could only
+return one answer for the batch. Processing items one at a time is n8n's own loop and the only shape
+that yields a correct answer per item.
 
 ## Resources
 

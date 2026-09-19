@@ -17,7 +17,6 @@ import {
 	readOptionsParameter,
 } from '../../shared/questions';
 import type { QuestionInput } from '../../shared/questions';
-import { packStates, unpackAnswers } from '../../shared/state';
 import { createTransport } from '../../shared/transport';
 import { buildStateFields, resolveState as resolveStateParameter, stateParameterNames } from '../../shared/stateFields';
 import { readBooleanOption, resolveModel } from '../../shared/models';
@@ -42,11 +41,6 @@ const showOnlyForEvaluationEvaluate = {
 	resource: ['evaluation'],
 };
 
-const showOnlyForEvaluationMany = {
-	operation: ['evaluateMany'],
-	resource: ['evaluation'],
-};
-
 export const evaluationDescription: INodeProperties[] = [
 	{
 		displayName: 'Operation',
@@ -64,28 +58,10 @@ export const evaluationDescription: INodeProperties[] = [
 				description:
 					'Send one state and a set of questions in a single call, and read one answer per question',
 			},
-			{
-				name: 'Evaluate Many',
-				value: 'evaluateMany',
-				action: 'Evaluate one state per input item against typed questions',
-				description:
-					'Pack every input item into one state and ask the same questions about all of them at once',
-			},
 		],
 		default: 'evaluate',
 	},
 	...buildStateFields({ show: showOnlyForEvaluationEvaluate }),
-	{
-		displayName: 'State Field',
-		name: 'stateField',
-		type: 'string',
-		default: 'text',
-		displayOptions: {
-			show: showOnlyForEvaluationMany,
-		},
-		description:
-			'Which field of each incoming item holds the state. Leave as text when items are plain strings.',
-	},
 	{
 		displayName: 'Questions',
 		name: 'questions',
@@ -175,25 +151,21 @@ function readQuestions(this: IExecuteFunctions, itemIndex: number): QuestionInpu
 	}));
 }
 
-function resolveState(this: IExecuteFunctions, itemIndex: number, many: boolean): EntryType {
-	if (!many) {
-		return resolveStateParameter.call(this, stateParameterNames(), itemIndex);
-	}
-
-	const stateField = (this.getNodeParameter('stateField', itemIndex, 'text') as string).trim();
-	const items = this.getInputData();
-	const states: EntryType[] = items.map((item) => {
-		const source = stateField === '' ? item.json : item.json[stateField];
-		return asEntryType(source);
-	});
-
-	return packStates(states, 'items');
+/**
+ * Resolves the state for one input item.
+ *
+ * Evaluate runs once per item, which is n8n's own loop. An earlier version packed every item into
+ * a single state to save a request, but a request returns one answer per question about the whole
+ * state, so the packed answers could never be split back out per item. The provider's contract is
+ * one state per request, so one request per item is the only shape that returns correct answers.
+ */
+function resolveState(this: IExecuteFunctions, itemIndex: number): EntryType {
+	return resolveStateParameter.call(this, stateParameterNames(), itemIndex);
 }
 
 async function requestAnswers(
 	this: IExecuteFunctions,
 	itemIndex: number,
-	many: boolean,
 ): Promise<{
 	response: QuestionAnswers;
 	questions: Record<string, Question>;
@@ -218,7 +190,7 @@ async function requestAnswers(
 		);
 	}
 
-	const state = resolveState.call(this, itemIndex, many);
+	const state = resolveState.call(this, itemIndex);
 	const evaluationOptions = this.getNodeParameter('options', itemIndex, {}) as Record<string, unknown>;
 	const credentials = (await this.getCredentials('judgmentApi')) as JudgmentCredentials;
 	const model = resolveModel(evaluationOptions, credentials);
@@ -237,8 +209,7 @@ export async function executeEvaluation(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData[]> {
-	const many = (this.getNodeParameter('operation', itemIndex) as string) === 'evaluateMany';
-	const { response, questions, evaluationOptions } = await requestAnswers.call(this, itemIndex, many);
+	const { response, questions, evaluationOptions } = await requestAnswers.call(this, itemIndex);
 
 	const failOnUnparsed = readBooleanOption(evaluationOptions, 'failOnUnparsed', true);
 	const ids = Object.keys(questions);
@@ -257,7 +228,6 @@ export async function executeEvaluation(
 		}
 	}
 
-	const itemCount = many ? this.getInputData().length : 1;
 	const out: INodeExecutionData[] = [];
 
 	for (const id of ids) {
@@ -281,18 +251,7 @@ export async function executeEvaluation(
 			raw: response.raw,
 		};
 
-		if (!many) {
-			out.push({ json: shared, pairedItem: { item: itemIndex } });
-			continue;
-		}
-
-		const unpacked = unpackAnswers(answer, itemCount);
-		unpacked.forEach(({ answers: perItem }, index) => {
-			out.push({
-				json: { ...shared, answer: perItem as IDataObject, itemIndex: index },
-				pairedItem: { item: index },
-			});
-		});
+		out.push({ json: shared, pairedItem: { item: itemIndex } });
 	}
 
 	return out;
