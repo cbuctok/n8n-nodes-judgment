@@ -85,7 +85,7 @@ function makeContext(parameters, inputItems = [{ json: {} }]) {
 		return resolveExpression(parameters[name], itemIndex, inputItems);
 	};
 	return {
-		helpers,
+			helpers,
 		getNode: () => ({ name: 'Judgment', type: 'n8n-nodes-judgment.judgment', typeVersion: 1 }),
 		getInputData: () => inputItems,
 		getNodeParameter: get,
@@ -276,21 +276,22 @@ const cases = [
 		run: 'score',
 	},
 	{
-		label: 'Evaluation Many — one state per input item, one packed call',
+		// n8n calls execute() once per input item, and Evaluate runs once per item. The harness
+		// drives both invocations so the per-item shape is actually exercised: an earlier version
+		// packed items into one state, which could not return per-item answers.
+		label: 'Evaluation — one call per input item',
 		parameters: {
 			resource: 'evaluation',
-			operation: 'evaluateMany',
+			operation: 'evaluate',
 			state: 'text',
-			// Evaluate Many packs all items into one call, so the expression resolves per item
-			// inside the node. The harness supplies the rows and the node loops over them.
 			stateText: '={{ $json.text }}',
 			questions: {
 				question: [
 					{
-					id: 'urgency',
-					questionType: 'noul',
-					questionInstructions: 'Does this message convey urgency?',
-				},
+						id: 'urgency',
+						questionType: 'noul',
+						questionInstructions: 'Does this message convey urgency?',
+					},
 				],
 			},
 			options: {},
@@ -299,6 +300,9 @@ const cases = [
 			{ json: { text: 'URGENT: the site is down and we are losing orders!' } },
 			{ json: { text: 'Just wondering when the next release is planned.' } },
 		],
+		invocations: [0, 1],
+		// Two items, one question, so two answers: one per item and no duplication.
+		expect: { items: 2 },
 		run: 'evaluation',
 	},
 ];
@@ -351,11 +355,20 @@ for (const testCase of cases) {
 
 	try {
 		let out;
+		const invocations = testCase.invocations ?? [0];
+		const runAll = async (mod, fn) => {
+			const collected = [];
+			for (const index of invocations) {
+				collected.push(...(await fn(mod).call(context, index)));
+			}
+			return collected;
+		};
+
 		if (resource === 'evaluation') {
 			const mod = await import(
 				resolve(here, '../dist/nodes/Judgment/resources/evaluation/index.js')
 			);
-			out = await mod.executeEvaluation.call(context, 0);
+			out = await runAll(mod, () => mod.executeEvaluation);
 		} else if (resource === 'noul') {
 			const mod = await import(resolve(here, '../dist/nodes/Judgment/resources/noul/index.js'));
 			out = await mod.executeNoul.call(context, 0);
@@ -368,6 +381,14 @@ for (const testCase of cases) {
 
 		console.log(`\n=== ${testCase.label} ===`);
 		console.log(JSON.stringify(out.map((item) => item.json), null, 2).slice(0, 1600));
+
+		if (testCase.expect?.items !== undefined) {
+			const ok = out.length === testCase.expect.items;
+			console.log(
+				`  ${ok ? 'PASS' : 'FAIL'}  emitted ${out.length} items, expected ${testCase.expect.items}`,
+			);
+			if (!ok) failures += 1;
+		}
 	} catch (error) {
 		failures += 1;
 		console.log(`\n=== ${testCase.label} === FAILED`);

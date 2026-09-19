@@ -96,9 +96,16 @@ jobs:
         #
         # Requires the trusted publisher to have BOTH `npm stage publish` and
         # `npm publish` allowed — staged uploads are a publish operation.
+        #
+        # RELEASE_MODE satisfies the `prepublishOnly` guard. That hook runs
+        # `n8n-node prerelease`, which exits non-zero unless this variable is set,
+        # to stop anyone publishing by hand instead of cutting a release. Here the
+        # release has already been cut by the tag, so the guard is told to stand
+        # down rather than removed.
         run: |
           npm run lint
           npm run build
           npm stage publish --provenance --access public
         env:
           NPM_CONFIG_PROVENANCE: 'true'
+          RELEASE_MODE: 'true'

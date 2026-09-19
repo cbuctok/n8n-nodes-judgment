@@ -3,7 +3,7 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## Screen chat messages and model replies with Judgment\n\n### How it works\n\n1. Generates three example user messages and a sample model reply, so the guardrail runs without an LLM attached.\n2. Scores five hazards for every message in one judgment call: jailbreak, prompt injection, personal data, real-world harm, and self-harm.\n3. Normalizes each hazard into a message, hazard, risk, and verdict, then routes the hazards into blocked and allowed paths.\n4. Checks the model's reply for compliance with an injected instruction and for leaking its own system prompt.\n5. Routes a risky reply to an escalation path and a clean reply to the delivery path.\n\n### Setup steps\n\n- [ ] Add your **Judgment API** credential to *Evaluate Message Risk* and *Evaluate Reply Risk*, and set the Base URL if you are not using the default provider.\n- [ ] Install `n8n-nodes-judgment` from **Settings \u2192 Community Nodes**. See the note beside the first node.\n- [ ] Replace *Generate Sample Messages* with your real input: a chat trigger, a webhook, or a mailbox.\n- [ ] Replace *Generate Model Reply* with your LLM node so the reply check runs on real output.\n- [ ] Review the 0.5 threshold in *Route by Message Verdict* and *If Reply Is Risky* against the stakes of the action you are guarding.\n\n### Customization\n\nAdjust the thresholds and branch destinations to match your policy categories. The hazard list is the main thing to tune: add a question to *Evaluate Message Risk* for any category your policy names, and drop the ones you do not screen for. Noul answers carry no confidence, so the probability is the whole signal.",
+        "content": "## Screen chat messages and model replies with Judgment\n\n### How it works\n\n1. Generates three example user messages and a sample model reply, so the guardrail runs without an LLM attached.\n2. Scores five hazards for every message in one judgment call: jailbreak, prompt injection, personal data, real-world harm, and self-harm.\n3. Normalizes each hazard into a message, hazard, risk, and verdict, then routes the hazards into blocked and allowed paths.\n4. Checks the model's reply for compliance with an injected instruction and for leaking its own system prompt.\n5. Routes a risky reply to an escalation path and a clean reply to the delivery path.\n\n### Setup steps\n\n- [ ] Install `n8n-nodes-judgment` from **Settings \u2192 Community Nodes**.\n- [ ] Add your **Judgment API** credential to *Evaluate Message Risk* and *Evaluate Reply Risk*, and set the Base URL if you are not using the default provider.\n- [ ] Replace *Generate Sample Messages* with your real input: a chat trigger, a webhook, or a mailbox.\n- [ ] Replace *Generate Model Reply* with your LLM node so the reply check runs on real output.\n- [ ] Review the 0.5 threshold in *Route by Message Verdict* and *If Reply Is Risky* against the stakes of the action you are guarding.\n\n### Customization\n\nAdjust the thresholds and branch destinations to match your policy categories. The hazard list is the main thing to tune: add a question to *Evaluate Message Risk* for any category your policy names, and drop the ones you do not screen for. Noul answers carry no confidence, so the probability is the whole signal.",
         "height": 896,
         "width": 480
       },
@@ -19,15 +19,15 @@
       "parameters": {
         "content": "## Install the community node first\n\n**Settings \u2192 Community Nodes \u2192 Install \u2192** `n8n-nodes-judgment`, then add your API key on the **Judgment API** credential. Self-hosted only: community nodes cannot run on n8n Cloud.",
         "height": 320,
-        "width": 420,
+        "width": 480,
         "color": 7
       },
       "name": "Install Note",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -1490,
-        105
+        -2066,
+        877
       ]
     },
     {

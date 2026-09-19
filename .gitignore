@@ -1,4 +1,4 @@
 dist
 node_modules
 *.tsbuildinfo
-templates/.DS_Store
+.DS_Store

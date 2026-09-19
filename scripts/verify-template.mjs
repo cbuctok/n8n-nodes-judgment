@@ -175,12 +175,36 @@ console.log(`\nexecution ${executionId}: ${status.toUpperCase()}`);
  * authority on what actually ran. It records every node start and finish with its workflow id,
  * which is enough to tell a node that ran from one that was skipped.
  */
-function readRunLog(workflowId) {
+/**
+ * Reads the n8n container log.
+ *
+ * `docker compose logs` only reports services in the compose project belonging to the directory it
+ * runs in, so a repository that has been moved or renamed silently yields an empty log and every
+ * node looks like it never ran. Resolve the project directory from the running container instead.
+ */
+function composeDir() {
+	try {
+		const dir = execSync(
+			'docker inspect n8n-judgment-dev --format \'{{ index .Config.Labels "com.docker.compose.project.working_dir" }}\'',
+			{ encoding: 'utf8' },
+		).trim();
+		return dir.length > 0 ? dir : resolve(here, '..');
+	} catch {
+		return resolve(here, '..');
+	}
+}
+
+function readLog() {
 	const raw = execSync('docker compose logs n8n 2>&1', {
-		cwd: resolve(here, '..'),
+		cwd: composeDir(),
 		encoding: 'utf8',
 		maxBuffer: 64 * 1024 * 1024,
 	});
+	return raw.split('\n');
+}
+
+function readRunLog(workflowId) {
+	const raw = readLog().join('\n');
 	const events = new Map();
 	for (const line of raw.split('\n')) {
 		if (!line.includes(workflowId)) continue;
@@ -215,10 +239,34 @@ for (const node of executable) {
 	console.log(node.name.padEnd(width) + '  ' + result);
 }
 
+/**
+ * Counts, per node, how many finished lines name it. n8n logs once per node per execution, so this
+ * is 1 for every node that ran. It is reported because a node that runs is not the same as a node
+ * that ran for every item: a branch taking one ticket out of five looks identical to one taking
+ * all five. Read the branch counts against the sample size, and use a probe when it matters.
+ */
+const finishedCounts = new Map();
+for (const line of readLog()) {
+	if (!line.includes(workflowId)) continue;
+	const match = line.match(/Running node "([^"]+)" finished successfully/);
+	if (match) finishedCounts.set(match[1], (finishedCounts.get(match[1]) ?? 0) + 1);
+}
+
 const problems = executable.filter((n) => {
 	const state = events.get(n.name);
 	return !state?.started || state.error || !state.finished;
 });
+
+/**
+ * Remove the workflow this run created. Without this, every verification leaves a copy behind and
+ * the editor fills with near-identical workflows, which is how a debug probe gets mistaken for the
+ * template under test.
+ */
+if (process.env.KEEP_WORKFLOW !== '1') {
+	await req(`/rest/workflows/${workflowId}/archive`, { method: 'POST', cookie });
+	await req(`/rest/workflows/${workflowId}`, { method: 'DELETE', cookie });
+	console.log(`\nworkflow ${workflowId} removed (set KEEP_WORKFLOW=1 to keep it)`);
+}
 
 if (resultData.error) {
 	console.log('\nworkflow error:', JSON.stringify(resultData.error).slice(0, 600));
