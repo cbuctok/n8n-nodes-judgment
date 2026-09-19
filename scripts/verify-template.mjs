@@ -175,9 +175,28 @@ console.log(`\nexecution ${executionId}: ${status.toUpperCase()}`);
  * authority on what actually ran. It records every node start and finish with its workflow id,
  * which is enough to tell a node that ran from one that was skipped.
  */
+/**
+ * Reads the n8n container log.
+ *
+ * `docker compose logs` only reports services in the compose project belonging to the directory it
+ * runs in, so a repository that has been moved or renamed silently yields an empty log and every
+ * node looks like it never ran. Resolve the project directory from the running container instead.
+ */
+function composeDir() {
+	try {
+		const dir = execSync(
+			'docker inspect n8n-judgment-dev --format \'{{ index .Config.Labels "com.docker.compose.project.working_dir" }}\'',
+			{ encoding: 'utf8' },
+		).trim();
+		return dir.length > 0 ? dir : resolve(here, '..');
+	} catch {
+		return resolve(here, '..');
+	}
+}
+
 function readLog() {
 	const raw = execSync('docker compose logs n8n 2>&1', {
-		cwd: resolve(here, '..'),
+		cwd: composeDir(),
 		encoding: 'utf8',
 		maxBuffer: 64 * 1024 * 1024,
 	});
@@ -185,11 +204,7 @@ function readLog() {
 }
 
 function readRunLog(workflowId) {
-	const raw = execSync('docker compose logs n8n 2>&1', {
-		cwd: resolve(here, '..'),
-		encoding: 'utf8',
-		maxBuffer: 64 * 1024 * 1024,
-	});
+	const raw = readLog().join('\n');
 	const events = new Map();
 	for (const line of raw.split('\n')) {
 		if (!line.includes(workflowId)) continue;
