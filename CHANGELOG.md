@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.2
+
+- Removed **Evaluate Many**. The provider returns one answer per question about one state, so a
+  batch of five items produced five identical answers; **Evaluate** now runs once per item and
+  returns an answer per item.
+
 ## 0.1.1
 
 - Renamed the package to the unscoped `n8n-nodes-judgment`, which is the name to install. The

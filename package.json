@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-judgment",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "Make typed judgements about text or application state: ask Choice, Score, and Noul questions and branch on the answers.",
 	"license": "MIT",
 	"homepage": "https://github.com/cbuctok/n8n-nodes-judgment",
@@ -39,7 +39,8 @@
 		"prepublishOnly": "n8n-node prerelease"
 	},
 	"files": [
-		"dist"
+		"dist",
+		"!dist/templates"
 	],
 	"n8n": {
 		"n8nNodesApiVersion": 1,
