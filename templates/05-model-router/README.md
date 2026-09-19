@@ -44,9 +44,6 @@ combined, and *Zip Answers Per Ticket* pairs the three lists into one item per t
 | T-1004 — charged twice | 1.00 | 0.29 | 0.15 | Small model |
 | T-1005 — accrual reversal question | **0.28** | 0.90 | 0.15 | **Human** |
 
-Each of the four routes is exercised. Two tickets cost nothing, one reaches the small model, one
-escalates, and one goes to a person.
-
 **The human branch is the important one.** T-1005 reads like a billing question but is really an
 accounting question, and the classifier said so plainly: it picked an intent at 0.28 confidence,
 which is close to a coin toss. Sending that to a model would have meant paying to have something
