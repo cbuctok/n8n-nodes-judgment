@@ -67,10 +67,10 @@ five fields need the expensive model, instead of spending it on the whole record
 
 ## Notes
 
-The two questions are worded to avoid overlap. The first asks whether the value is in the source at
-all; the second asks whether the source states a different one. An earlier draft asked whether a
-value was "hallucinated, off target, or incomplete", and all three fired together on a single wrong
-field, which made the output harder to act on.
+The two questions are worded so they do not overlap. The first asks whether the value is in the
+source at all; the second asks whether the source states a different one. Keep them that narrow when
+you write your own: a single question covering "hallucinated, off target, or incomplete" scores all
+three as one, and the output then tells you a field is wrong without telling you how.
 
 Each check is a yes/no question, so no confidence value comes back. The probability is the whole
 signal, and a score near 0.5 means the verifier genuinely could not tell.

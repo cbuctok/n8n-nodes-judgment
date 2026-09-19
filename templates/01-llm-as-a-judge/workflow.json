@@ -3,7 +3,7 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## Grade AI answers and route the shaky ones with Judgment\n\n### How it works\n\n1. Generates three AI answers, each with the question it was meant to answer and a reference answer to judge it against.\n2. Grades every answer in one judgment call that asks six questions at once: four yes/no checks, one clarity score, and one ship/edit/reject choice.\n3. Normalizes each answer into a grade, an answer ID, a value, a 0-1 score, and the judge's confidence.\n4. Decides whether each grade is trusted: by confidence for Choice and Score answers, by distance from 0.5 for Noul answers.\n5. Routes grades the judge was sure of to a reporting path, and shaky grades to human review.\n\n### Setup steps\n\n- [ ] Add your **Judgment API** credential to the *Grade Answers* node, and set the Base URL if you are not using the default provider.\n- [ ] Install `n8n-nodes-judgment` from **Settings \u2192 Community Nodes**. See the note beside the first node.\n- [ ] Replace *Sample Answers* with your own evaluation set, keeping the question, answer, and reference fields.\n- [ ] Review the 0.8 confidence threshold and the 0.25-0.75 Noul band in the *Verdict* node.\n- [ ] Point *Trusted Grades* at your scoreboard, and *Needs a Human Look* at wherever a person reviews work.\n\n### Customization\n\nChange the rubric by editing the six questions in *Grade Answers*: swap them, add a dimension, or drop the ones your set does not need. The trust rules are one expression in *Verdict*, so re-tuning them never needs a new inference run.\n\n### Reading the output\n\nOne row per question, six per answer. `score0to1` is quality; `trust` is certainty, so a `reject` marked `trusted` is the most actionable row.",
+        "content": "## Grade AI answers and route the shaky ones with Judgment\n\n### How it works\n\n1. Generates three AI answers, each with the question it was meant to answer and a reference answer to judge it against.\n2. Grades every answer in one judgment call that asks six questions at once: four yes/no checks, one clarity score, and one ship/edit/reject choice.\n3. Normalizes each answer into a grade, an answer ID, a value, a 0-1 score, and the judge's confidence.\n4. Decides whether each grade is trusted: by confidence for Choice and Score answers, by distance from 0.5 for Noul answers.\n5. Routes grades the judge was sure of to a reporting path, and shaky grades to human review.\n\n### Setup steps\n\n- [ ] Install `n8n-nodes-judgment` from **Settings \u2192 Community Nodes**.\n- [ ] Add your **Judgment API** credential to the *Grade Answers* node, and set the Base URL if you are not using the default provider.\n- [ ] Replace *Sample Answers* with your own evaluation set, keeping the question, answer, and reference fields.\n- [ ] Review the 0.8 confidence threshold and the 0.25-0.75 Noul band in the *Verdict* node.\n- [ ] Point *Trusted Grades* at your scoreboard, and *Needs a Human Look* at wherever a person reviews work.\n\n### Customization\n\nChange the rubric by editing the six questions in *Grade Answers*: swap them, add a dimension, or drop the ones your set does not need. The trust rules are one expression in *Verdict*, so re-tuning them never needs a new inference run.\n\n### Reading the output\n\nOne row per question, six per answer. `score0to1` is quality; `trust` is certainty, so a `reject` marked `trusted` is the most actionable row.",
         "height": 896,
         "width": 480
       },
@@ -19,15 +19,15 @@
       "parameters": {
         "content": "## Install the community node first\n\n**Settings \u2192 Community Nodes \u2192 Install \u2192** `n8n-nodes-judgment`, then add your API key on the **Judgment API** credential. Self-hosted only: community nodes cannot run on n8n Cloud.",
         "height": 320,
-        "width": 180,
+        "width": 480,
         "color": 7
       },
       "name": "Install Note",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -1490,
-        185
+        -2066,
+        857
       ]
     },
     {
