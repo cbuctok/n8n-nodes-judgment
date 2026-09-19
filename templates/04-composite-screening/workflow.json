@@ -1,0 +1,640 @@
+{
+  "name": "Rank candidates by role fit with weighted scoring in Judgment",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Manual Test Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1536,
+        400
+      ],
+      "notes": "Run this workflow to score three candidates under two different role profiles."
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cid",
+              "name": "candidate",
+              "value": "Priya Raman",
+              "type": "string"
+            },
+            {
+              "id": "ctext",
+              "name": "profile",
+              "value": "Priya Raman\n\nNine years as a backend engineer, and nothing else. Rebuilt a payments ledger to handle 40k writes per second, then rewrote the storage layer underneath it. Runs the database team's design reviews and wrote its migration playbook. Has never managed anyone and has no interest in it. Works only in Go and Postgres.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Candidate A Profile",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1296,
+        240
+      ],
+      "notes": "Extreme on depth and design, weak on leadership. Wins for a senior individual contributor role."
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cid",
+              "name": "candidate",
+              "value": "Tomas Berg",
+              "type": "string"
+            },
+            {
+              "id": "ctext",
+              "name": "profile",
+              "value": "Tomas Berg\n\nEngineering manager for six years, teams of six to nine. Grew two products from prototype to launch by unblocking other people. Hired and developed the entire team, and ran the quarterly planning process across three teams. Writes code rarely now, mostly tooling and reviews. Has worked across web, mobile and data teams.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Candidate B Profile",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1296,
+        432
+      ],
+      "notes": "Extreme on leadership and breadth, weak on hands-on depth. Wins for an engineering manager role."
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cid",
+              "name": "candidate",
+              "value": "Dana Okafor",
+              "type": "string"
+            },
+            {
+              "id": "ctext",
+              "name": "profile",
+              "value": "Dana Okafor\n\nTen years across backend and data. Strong on both sides of a system boundary: redesigned a batch pipeline as a streaming service, and ran the on-call rotation while doing it. Leads design reviews for two teams. Has shipped frontend work when needed.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Candidate C Profile",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1296,
+        624
+      ],
+      "notes": "Balanced across every dimension, so the weights decide where this one lands."
+    },
+    {
+      "parameters": {
+        "mode": "append",
+        "numberInputs": 3,
+        "options": {}
+      },
+      "name": "Merge Candidate Profiles",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -1056,
+        400
+      ],
+      "notes": "One item per candidate, so all three are scored in one pass."
+    },
+    {
+      "parameters": {
+        "resource": "score",
+        "operation": "composite",
+        "state": "fields",
+        "stateFields": {
+          "field": [
+            {
+              "fieldName": "profile",
+              "fieldValue": "={{ $json.profile }}"
+            }
+          ]
+        },
+        "dimensionsMode": "fields",
+        "sharedLevelsMode": "fields",
+        "sharedLevels": {
+          "sharedLevel": [
+            {
+              "sharedLevelDescription": "No evidence"
+            },
+            {
+              "sharedLevelDescription": "Some exposure"
+            },
+            {
+              "sharedLevelDescription": "Solid working experience"
+            },
+            {
+              "sharedLevelDescription": "Deep, with examples"
+            },
+            {
+              "sharedLevelDescription": "Extensive, and clearly led work here"
+            }
+          ]
+        },
+        "dimensions": {
+          "dimension": [
+            {
+              "dimensionName": "depth",
+              "dimensionInstructions": "How much depth of hands-on engineering experience does `profile` show?",
+              "dimensionLevelsSource": "shared"
+            },
+            {
+              "dimensionName": "leadership",
+              "dimensionInstructions": "How much evidence of leading or mentoring other engineers does `profile` show?",
+              "dimensionLevelsSource": "shared"
+            },
+            {
+              "dimensionName": "design",
+              "dimensionInstructions": "How much evidence of system design work does `profile` show?",
+              "dimensionLevelsSource": "shared"
+            },
+            {
+              "dimensionName": "generalist",
+              "dimensionInstructions": "How broad is the range of work shown in `profile`, across domains and tools?",
+              "dimensionLevelsSource": "shared"
+            }
+          ]
+        },
+        "weightsMode": "fields",
+        "weights": {
+          "weight": [
+            {
+              "weightDimension": "depth",
+              "weightValue": 4
+            },
+            {
+              "weightDimension": "leadership",
+              "weightValue": 1
+            },
+            {
+              "weightDimension": "design",
+              "weightValue": 4
+            },
+            {
+              "weightDimension": "generalist",
+              "weightValue": 1
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Evaluate IC Role Fit",
+      "type": "n8n-nodes-judgment.judgment",
+      "typeVersion": 1,
+      "position": [
+        -816,
+        240
+      ],
+      "credentials": {
+        "judgmentApi": {
+          "id": "",
+          "name": "Judgment API"
+        }
+      },
+      "notes": "Weights favour depth and design. Change a weight here and the score changes with no new inference."
+    },
+    {
+      "parameters": {
+        "resource": "score",
+        "operation": "composite",
+        "state": "fields",
+        "stateFields": {
+          "field": [
+            {
+              "fieldName": "profile",
+              "fieldValue": "={{ $json.profile }}"
+            }
+          ]
+        },
+        "dimensionsMode": "fields",
+        "sharedLevelsMode": "fields",
+        "sharedLevels": {
+          "sharedLevel": [
+            {
+              "sharedLevelDescription": "No evidence"
+            },
+            {
+              "sharedLevelDescription": "Some exposure"
+            },
+            {
+              "sharedLevelDescription": "Solid working experience"
+            },
+            {
+              "sharedLevelDescription": "Deep, with examples"
+            },
+            {
+              "sharedLevelDescription": "Extensive, and clearly led work here"
+            }
+          ]
+        },
+        "dimensions": {
+          "dimension": [
+            {
+              "dimensionName": "depth",
+              "dimensionInstructions": "How much depth of hands-on engineering experience does `profile` show?",
+              "dimensionLevelsSource": "shared"
+            },
+            {
+              "dimensionName": "leadership",
+              "dimensionInstructions": "How much evidence of leading or mentoring other engineers does `profile` show?",
+              "dimensionLevelsSource": "shared"
+            },
+            {
+              "dimensionName": "design",
+              "dimensionInstructions": "How much evidence of system design work does `profile` show?",
+              "dimensionLevelsSource": "shared"
+            },
+            {
+              "dimensionName": "generalist",
+              "dimensionInstructions": "How broad is the range of work shown in `profile`, across domains and tools?",
+              "dimensionLevelsSource": "shared"
+            }
+          ]
+        },
+        "weightsMode": "fields",
+        "weights": {
+          "weight": [
+            {
+              "weightDimension": "depth",
+              "weightValue": 1
+            },
+            {
+              "weightDimension": "leadership",
+              "weightValue": 4
+            },
+            {
+              "weightDimension": "design",
+              "weightValue": 2
+            },
+            {
+              "weightDimension": "generalist",
+              "weightValue": 3
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Evaluate EM Role Fit",
+      "type": "n8n-nodes-judgment.judgment",
+      "typeVersion": 1,
+      "position": [
+        -816,
+        560
+      ],
+      "credentials": {
+        "judgmentApi": {
+          "id": "",
+          "name": "Judgment API"
+        }
+      },
+      "notes": "The same four dimensions, weighted for a manager. Candidate B overtakes A without re-running the ratings."
+    },
+    {
+      "parameters": {
+        "content": "## Rank candidates by role fit with weighted scoring in Judgment\n\n### How it works\n\n1. Holds three candidate profiles, each as a Set node, chosen so no candidate is strongest on every dimension.\n2. Merges them into one stream, so all three are scored in a single pass.\n3. Rates each candidate on four dimensions in one judgment call: depth, leadership, design, and breadth.\n4. Scores those same ratings three times against three different weight sets, changing only the weights.\n5. Builds one report row per candidate per weighting, each tagged with the profile that produced it.\n\n### Setup steps\n\n- [ ] Add your **Judgment API** credential to all three scoring nodes, and set the Base URL if you are not using the default provider.\n- [ ] Install `n8n-nodes-judgment` from **Settings \u2192 Community Nodes**. See the note beside the first node.\n- [ ] Replace the three candidate Set nodes with your own source, keeping one `profile` field per item.\n- [ ] Edit the four dimensions and the shared five-point scale to match your rubric. Every scoring node must declare the same dimensions.\n- [ ] Set the weights to match the roles you are hiring for, then compare the report nodes side by side.\n\n### Customization\n\nWeights are applied in the node, not by the model, so adjusting a weight re-ranks the candidates without a single new API call. *Evaluate IC Role Fit* and *Evaluate EM Role Fit* differ only in their weight rows; copy either to score another role. *Evaluate Balanced Role Fit* supplies the same rubric as JSON, for when the weights come from elsewhere.\n\nCandidate C is deliberately mid on every dimension, so the weights decide where they land.",
+        "width": 480,
+        "height": 1080
+      },
+      "name": "How This Works",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -2080,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Install the community node first\n\n**Settings \u2192 Community Nodes \u2192 Install \u2192** `n8n-nodes-judgment`, then add your API key on the **Judgment API** credential. Self-hosted only: community nodes cannot run on n8n Cloud.",
+        "width": 480,
+        "height": 200,
+        "color": 7
+      },
+      "name": "Install Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -2080,
+        1040
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": true,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "role",
+              "name": "roleProfile",
+              "value": "Senior IC",
+              "type": "string"
+            },
+            {
+              "id": "cand",
+              "name": "candidate",
+              "value": "={{ $('Merge Candidate Profiles').item.json.candidate }}",
+              "type": "string"
+            },
+            {
+              "id": "combined",
+              "name": "combinedScore",
+              "value": "={{ $json.combinedScore }}",
+              "type": "number"
+            },
+            {
+              "id": "pct",
+              "name": "fitPercent",
+              "value": "={{ Math.round($json.combinedScore * 100) }}",
+              "type": "number"
+            },
+            {
+              "id": "breakdown",
+              "name": "perDimension",
+              "value": "={{ $json.dimensions.map(d => d.name + ' ' + d.normalized.toFixed(2)).join(', ') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Prepare IC Report Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -576,
+        200
+      ],
+      "notes": "One row per candidate under the senior IC weights, tagged with the role that produced it."
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": true,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "role",
+              "name": "roleProfile",
+              "value": "Engineering Manager",
+              "type": "string"
+            },
+            {
+              "id": "cand",
+              "name": "candidate",
+              "value": "={{ $('Merge Candidate Profiles').item.json.candidate }}",
+              "type": "string"
+            },
+            {
+              "id": "combined",
+              "name": "combinedScore",
+              "value": "={{ $json.combinedScore }}",
+              "type": "number"
+            },
+            {
+              "id": "pct",
+              "name": "fitPercent",
+              "value": "={{ Math.round($json.combinedScore * 100) }}",
+              "type": "number"
+            },
+            {
+              "id": "breakdown",
+              "name": "perDimension",
+              "value": "={{ $json.dimensions.map(d => d.name + ' ' + d.normalized.toFixed(2)).join(', ') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Prepare EM Report Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -576,
+        560
+      ],
+      "notes": "One row per candidate under the manager weights. Read both report nodes side by side to see the ranking invert."
+    },
+    {
+      "parameters": {
+        "resource": "score",
+        "operation": "composite",
+        "state": "fields",
+        "stateFields": {
+          "field": [
+            {
+              "fieldName": "profile",
+              "fieldValue": "={{ $json.profile }}"
+            }
+          ]
+        },
+        "dimensionsMode": "json",
+        "dimensionsJson": "={{ [ { \"name\": \"depth\", \"instructions\": \"How much depth of hands-on engineering experience does `profile` show?\", \"levels\": [\"No evidence\", \"Some exposure\", \"Solid working experience\", \"Deep, with examples\", \"Extensive, and clearly led work here\"] }, { \"name\": \"leadership\", \"instructions\": \"How much evidence of leading or mentoring other engineers does `profile` show?\", \"levels\": [\"No evidence\", \"Some exposure\", \"Solid working experience\", \"Deep, with examples\", \"Extensive, and clearly led work here\"] }, { \"name\": \"design\", \"instructions\": \"How much evidence of system design work does `profile` show?\", \"levels\": [\"No evidence\", \"Some exposure\", \"Solid working experience\", \"Deep, with examples\", \"Extensive, and clearly led work here\"] }, { \"name\": \"generalist\", \"instructions\": \"How broad is the range of work shown in `profile`, across domains and tools?\", \"levels\": [\"No evidence\", \"Some exposure\", \"Solid working experience\", \"Deep, with examples\", \"Extensive, and clearly led work here\"] } ] }}",
+        "weightsMode": "json",
+        "weightsJson": "={{ { \"depth\": 2, \"leadership\": 2, \"design\": 2, \"generalist\": 2 } }}",
+        "options": {}
+      },
+      "name": "Evaluate Balanced Role Fit",
+      "type": "n8n-nodes-judgment.judgment",
+      "typeVersion": 1,
+      "position": [
+        -816,
+        880
+      ],
+      "credentials": {
+        "judgmentApi": {
+          "id": "",
+          "name": "Judgment API"
+        }
+      },
+      "notes": "Same dimensions and weights, but both come from JSON. Use this shape when the rubric is generated upstream rather than typed into rows."
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": true,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "role",
+              "name": "roleProfile",
+              "value": "Equal weights",
+              "type": "string"
+            },
+            {
+              "id": "cand",
+              "name": "candidate",
+              "value": "={{ $('Merge Candidate Profiles').item.json.candidate }}",
+              "type": "string"
+            },
+            {
+              "id": "combined",
+              "name": "combinedScore",
+              "value": "={{ $json.combinedScore }}",
+              "type": "number"
+            },
+            {
+              "id": "pct",
+              "name": "fitPercent",
+              "value": "={{ Math.round($json.combinedScore * 100) }}",
+              "type": "number"
+            },
+            {
+              "id": "breakdown",
+              "name": "perDimension",
+              "value": "={{ $json.dimensions.map(d => d.name + ' ' + d.normalized.toFixed(2)).join(', ') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Prepare Balanced Report Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -576,
+        880
+      ],
+      "notes": "Every dimension weighted equally, which is the baseline the two role profiles are compared against."
+    }
+  ],
+  "connections": {
+    "Manual Test Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Candidate A Profile",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Set Candidate B Profile",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Set Candidate C Profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Candidate A Profile": {
+      "main": [
+        [
+          {
+            "node": "Merge Candidate Profiles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Candidate B Profile": {
+      "main": [
+        [
+          {
+            "node": "Merge Candidate Profiles",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Candidate Profiles": {
+      "main": [
+        [
+          {
+            "node": "Evaluate IC Role Fit",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Evaluate EM Role Fit",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Evaluate Balanced Role Fit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluate IC Role Fit": {
+      "main": [
+        [
+          {
+            "node": "Prepare IC Report Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Candidate C Profile": {
+      "main": [
+        [
+          {
+            "node": "Merge Candidate Profiles",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Evaluate EM Role Fit": {
+      "main": [
+        [
+          {
+            "node": "Prepare EM Report Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluate Balanced Role Fit": {
+      "main": [
+        [
+          {
+            "node": "Prepare Balanced Report Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}
