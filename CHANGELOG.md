@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.3
+
+- Replaced the placeholder author fields and copyright line, so the package names its real
+  maintainer.
+
 ## 0.1.2
 
 - Removed **Evaluate Many**. The provider returns one answer per question about one state, so a
