@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-judgment",
-	"version": "0.1.2",
+	"version": "0.1.3",
 	"description": "Make typed judgements about text or application state: ask Choice, Score, and Noul questions and branch on the answers.",
 	"license": "MIT",
 	"homepage": "https://github.com/cbuctok/n8n-nodes-judgment",
@@ -13,8 +13,8 @@
 		"routing"
 	],
 	"author": {
-		"name": "cbuctok",
-		"email": "cbuctok@users.noreply.github.com"
+		"name": "Greg Evseev",
+		"email": "greg@digitaliziran.si"
 	},
 	"repository": {
 		"type": "git",
