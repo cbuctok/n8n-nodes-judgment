@@ -1,10 +1,9 @@
 {
-	"node": "n8n-nodes-judgment",
+	"node": "n8n-nodes-judgment.judgment",
 	"nodeVersion": "1.0",
 	"codexVersion": "1.0",
 	"categories": [
-		"Development",
-		"Developer Tools"
+		"Development"
 	],
 	"resources": {
 		"credentialDocumentation": [
