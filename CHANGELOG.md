@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.4
+
+- Corrected the node's codex metadata so n8n associates it with `n8n-nodes-judgment.judgment`,
+  and dropped an undocumented category the editor was discarding.
+
 ## 0.1.3
 
 - Replaced the placeholder author fields and copyright line, so the package names its real
