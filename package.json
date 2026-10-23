@@ -53,8 +53,8 @@
 		]
 	},
 	"devDependencies": {
-		"@n8n/node-cli": "^0.48.4",
-		"@typesafe-ai/sdk": "^0.6.0",
+		"@n8n/node-cli": "^0.54.0",
+		"@typesafe-ai/sdk": "^0.7.0",
 		"eslint": "9.39.4",
 		"prettier": "^3.9.7",
 		"typescript": "5.9.3"
